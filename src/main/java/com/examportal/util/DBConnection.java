@@ -28,9 +28,9 @@ import java.util.Properties;
  *
  * Supported Databases:
  * --------------------
- * ✔ MySQL (Railway)
- * ✔ Local MySQL
- * ✔ H2 (Development)
+ *  MySQL (Railway)
+ *  Local MySQL
+ *  H2 (Development)
  *
  */
 
@@ -64,7 +64,7 @@ public class DBConnection {
 
             usingMySQL = true;
 
-            System.out.println("DBConnection : MySQL Driver Loaded Successfully");
+            System.out.println("DBConnection : MySQL Driver Loaded Successfully (driver present)");
 
         } catch (ClassNotFoundException e) {
 
@@ -80,7 +80,7 @@ public class DBConnection {
 
                 Class.forName("org.h2.Driver");
 
-                System.out.println("H2 Driver Loaded Successfully");
+                System.out.println("DBConnection : H2 Driver Loaded Successfully (driver present)");
 
             } catch (ClassNotFoundException e) {
 
@@ -219,6 +219,9 @@ public class DBConnection {
                 try {
 
                     Class.forName("org.h2.Driver");
+
+                    // Make the fallback explicit in logs so it's clear H2 is being used
+                    System.out.println("DBConnection : H2 Driver Loaded Successfully (fallback)");
 
                 } catch (ClassNotFoundException ex) {
 
