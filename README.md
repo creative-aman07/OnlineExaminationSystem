@@ -51,8 +51,4 @@ mvn clean package
 
 Deploy the generated ROOT.war on Apache Tomcat 10.
 
-## 👨‍💻 Developer
 
-**Ankit Kumar Tyagi**
-
-⭐ Star the repository if you found it useful.
