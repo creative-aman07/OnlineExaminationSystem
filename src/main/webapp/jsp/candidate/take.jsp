@@ -11,78 +11,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= test != null ? test.getTestName() : "Take Test" %></title>
+    <title><%= test != null ? test.getTestName() : "Take Test" %> | ExamPortal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
-    <style>
-        body { background: linear-gradient(135deg, #07111f, #15253f); color: #f3f6ff; font-family: Arial, sans-serif; }
-        .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; box-shadow: 0 12px 35px rgba(0,0,0,0.25); }
-        .option-card { border: 1px solid rgba(255,255,255,0.16); padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; }
-        #timer { position: sticky; top: 12px; z-index: 100; font-variant-numeric: tabular-nums; }
-        #timer.danger { background: rgba(220,53,69,0.9) !important; }
-    </style>
 </head>
 <body>
-<div class="container py-5">
-    <div class="glass p-4 p-lg-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="mb-0"><%= test != null ? test.getTestName() : "Test" %></h2>
-            <div id="timer" class="badge bg-primary fs-5 px-3 py-2">--:--</div>
-        </div>
-        <p class="text-light-emphasis">Duration: <%= test != null ? test.getDurationMinutes() : 0 %> minutes</p>
-        <form method="post" action="${pageContext.request.contextPath}/candidate" id="examForm">
-            <input type="hidden" name="_csrf" value="${csrfToken}" />
-            <input type="hidden" name="action" value="submit-test" />
-            <input type="hidden" name="testId" value="<%= test != null ? test.getTestId() : 0 %>" />
-            <input type="hidden" name="testName" value="<%= test != null ? test.getTestName() : "" %>" />
-            <% if (questions != null) { for (int i = 0; i < questions.size(); i++) { Question question = questions.get(i); %>
-            <div class="card bg-dark text-light mb-4">
-                <div class="card-body">
-                    <h6 class="card-title"><%= (i + 1) + ". " + question.getQuestionText() %></h6>
-                    <div class="mt-3">
-                        <div class="option-card"><label><input type="radio" name="answer_<%= question.getQuestionId() %>" value="A"> <%= question.getOptionA() %></label></div>
-                        <div class="option-card"><label><input type="radio" name="answer_<%= question.getQuestionId() %>" value="B"> <%= question.getOptionB() %></label></div>
-                        <div class="option-card"><label><input type="radio" name="answer_<%= question.getQuestionId() %>" value="C"> <%= question.getOptionC() %></label></div>
-                        <div class="option-card"><label><input type="radio" name="answer_<%= question.getQuestionId() %>" value="D"> <%= question.getOptionD() %></label></div>
-                    </div>
-                </div>
+<main class="container py-4 py-lg-5">
+    <header class="exam-panel exam-header p-3 p-md-4 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <p class="small text-secondary mb-1">Examination in progress</p>
+                <h1 class="h3 fw-bold mb-1"><%= test != null ? test.getTestName() : "Test" %></h1>
+                <p class="text-secondary mb-0">
+                    <%= test != null ? test.getSubject() : "" %>
+                    <span class="mx-1" aria-hidden="true">&middot;</span>
+                    <%= test != null ? test.getDurationMinutes() : 0 %> minutes
+                </p>
             </div>
-            <% } } %>
-            <button type="submit" class="btn btn-primary btn-lg">Submit Test</button>
-        </form>
+            <div class="text-md-end">
+                <span class="small text-secondary d-block mb-1">Time remaining</span>
+                <div id="timer" class="badge bg-primary fs-5 px-3 py-2" role="timer" aria-live="off">--:--</div>
+            </div>
+        </div>
+    </header>
+
+    <form method="post" action="${pageContext.request.contextPath}/candidate" id="examForm">
+        <input type="hidden" name="_csrf" value="${csrfToken}" />
+        <input type="hidden" name="action" value="submit-test" />
+        <input type="hidden" name="testId" value="<%= test != null ? test.getTestId() : 0 %>" />
+        <input type="hidden" name="testName" value="<%= test != null ? test.getTestName() : "" %>" />
+
+        <div class="exam-layout">
+            <section class="exam-panel p-3 p-md-4" aria-label="Examination questions">
+                <p class="small text-secondary mb-3">Select one answer for each question. You can move between questions at any time.</p>
+                <% if (questions != null) { for (int i = 0; i < questions.size(); i++) {
+                    Question question = questions.get(i); %>
+                <article class="exam-question <%= i == 0 ? "is-active" : "" %>" data-question-index="<%= i %>" aria-hidden="<%= i == 0 ? "false" : "true" %>">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge text-bg-light border">Question <%= i + 1 %> of <%= questions.size() %></span>
+                        <span class="small text-secondary"><%= question.getMarks() %> <%= question.getMarks() == 1 ? "mark" : "marks" %></span>
+                    </div>
+                    <h2 class="h5 fw-semibold mb-4"><%= question.getQuestionText() %></h2>
+                    <fieldset class="border-0 p-0 m-0">
+                        <legend class="visually-hidden">Answer options for question <%= i + 1 %></legend>
+                        <div class="d-grid gap-2">
+                            <div class="option-card exam-option">
+                                <input id="answer_<%= question.getQuestionId() %>_A" type="radio" name="answer_<%= question.getQuestionId() %>" value="A">
+                                <label for="answer_<%= question.getQuestionId() %>_A"><span class="fw-semibold me-2">A</span><%= question.getOptionA() %></label>
+                            </div>
+                            <div class="option-card exam-option">
+                                <input id="answer_<%= question.getQuestionId() %>_B" type="radio" name="answer_<%= question.getQuestionId() %>" value="B">
+                                <label for="answer_<%= question.getQuestionId() %>_B"><span class="fw-semibold me-2">B</span><%= question.getOptionB() %></label>
+                            </div>
+                            <div class="option-card exam-option">
+                                <input id="answer_<%= question.getQuestionId() %>_C" type="radio" name="answer_<%= question.getQuestionId() %>" value="C">
+                                <label for="answer_<%= question.getQuestionId() %>_C"><span class="fw-semibold me-2">C</span><%= question.getOptionC() %></label>
+                            </div>
+                            <div class="option-card exam-option">
+                                <input id="answer_<%= question.getQuestionId() %>_D" type="radio" name="answer_<%= question.getQuestionId() %>" value="D">
+                                <label for="answer_<%= question.getQuestionId() %>_D"><span class="fw-semibold me-2">D</span><%= question.getOptionD() %></label>
+                            </div>
+                        </div>
+                    </fieldset>
+                </article>
+                <% } } %>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-top pt-3 mt-4">
+                    <button class="btn btn-outline-primary" type="button" id="previousQuestion">Previous</button>
+                    <button class="btn btn-outline-primary" type="button" id="markForReview" aria-pressed="false">Mark for review</button>
+                    <button class="btn btn-primary" type="button" id="nextQuestion">Next question</button>
+                </div>
+            </section>
+
+            <aside class="exam-panel exam-sidebar p-3 p-md-4" aria-label="Question navigation">
+                <h2 class="h6 fw-bold mb-1">Question navigator</h2>
+                <p class="small text-secondary mb-3"><span id="answeredCount">0</span> of <%= questions != null ? questions.size() : 0 %> answered</p>
+                <div class="question-nav mb-3">
+                    <% if (questions != null) { for (int i = 0; i < questions.size(); i++) { %>
+                    <button type="button" class="<%= i == 0 ? "is-current" : "" %>" data-go-question="<%= i %>" aria-label="Go to question <%= i + 1 %>" aria-current="<%= i == 0 ? "step" : "false" %>"><%= i + 1 %></button>
+                    <% } } %>
+                </div>
+                <div class="small d-grid gap-2 mb-4" aria-label="Question status legend">
+                    <span><i class="d-inline-block rounded-circle bg-success me-2" style="width:9px;height:9px"></i>Answered</span>
+                    <span><i class="d-inline-block rounded-circle border me-2" style="width:9px;height:9px"></i>Unanswered</span>
+                    <span><i class="d-inline-block rounded-circle me-2" style="width:9px;height:9px;background:#F59E0B"></i>Marked for review</span>
+                </div>
+                <button class="btn btn-primary w-100" type="button" id="submitExam">Submit examination</button>
+                <p class="small text-secondary mt-2 mb-0">Your submission is checked against the examination deadline on the server.</p>
+            </aside>
+        </div>
+    </form>
+</main>
+
+<dialog class="exam-dialog" id="submitDialog" aria-labelledby="submitDialogTitle">
+    <h2 class="h5 fw-bold" id="submitDialogTitle">Submit your examination?</h2>
+    <p class="text-secondary"><span id="submitWarning">You won’t be able to change your answers after submitting.</span></p>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <button class="btn btn-outline-primary" type="button" id="cancelSubmit">Continue examination</button>
+        <button class="btn btn-primary" type="button" id="confirmSubmit">Submit answers</button>
     </div>
-</div>
+</dialog>
+
 <script>
-    // Remaining time is computed by the database clock server-side and passed in;
-    // the client only counts it down. On expiry the form auto-submits, and the
-    // server independently rejects late answers.
+    // The server provides the initial remaining time and independently enforces the deadline.
     (function () {
         var remaining = <%= remaining %>;
         var timerEl = document.getElementById('timer');
         var form = document.getElementById('examForm');
-        var deadline = Date.now() + remaining * 1000;
+        var questions = Array.prototype.slice.call(document.querySelectorAll('.exam-question'));
+        var navButtons = Array.prototype.slice.call(document.querySelectorAll('[data-go-question]'));
+        var dialog = document.getElementById('submitDialog');
+        var current = 0;
         var submitted = false;
+        var confirmed = false;
+        var reviewed = {};
+        var deadline = Date.now() + remaining * 1000;
 
-        function render(secs) {
-            var m = Math.floor(secs / 60);
-            var s = secs % 60;
-            timerEl.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
-            if (secs <= 60) {
-                timerEl.classList.add('danger');
+        function updateNavigation() {
+            var answered = 0;
+            questions.forEach(function (question, index) {
+                var hasAnswer = !!question.querySelector('input[type="radio"]:checked');
+                if (hasAnswer) answered++;
+                var button = navButtons[index];
+                button.classList.toggle('is-answered', hasAnswer);
+                button.classList.toggle('is-review', !!reviewed[index]);
+                button.classList.toggle('is-current', index === current);
+                button.setAttribute('aria-current', index === current ? 'step' : 'false');
+                var status = hasAnswer ? 'answered' : 'unanswered';
+                if (reviewed[index]) status += ', marked for review';
+                button.setAttribute('aria-label', 'Go to question ' + (index + 1) + ', ' + status);
+            });
+            document.getElementById('answeredCount').textContent = answered;
+            var unanswered = questions.length - answered;
+            document.getElementById('submitWarning').textContent = unanswered
+                ? 'You have ' + unanswered + ' unanswered ' + (unanswered === 1 ? 'question' : 'questions') + '. You won’t be able to change your answers after submitting.'
+                : 'You won’t be able to change your answers after submitting.';
+        }
+
+        function showQuestion(index) {
+            if (!questions.length) return;
+            current = Math.max(0, Math.min(index, questions.length - 1));
+            questions.forEach(function (question, questionIndex) {
+                var active = questionIndex === current;
+                question.classList.toggle('is-active', active);
+                question.setAttribute('aria-hidden', active ? 'false' : 'true');
+            });
+            document.getElementById('previousQuestion').disabled = current === 0;
+            document.getElementById('nextQuestion').disabled = current === questions.length - 1;
+            var reviewButton = document.getElementById('markForReview');
+            reviewButton.setAttribute('aria-pressed', reviewed[current] ? 'true' : 'false');
+            reviewButton.textContent = reviewed[current] ? 'Remove review mark' : 'Mark for review';
+            updateNavigation();
+        }
+
+        navButtons.forEach(function (button) {
+            button.addEventListener('click', function () { showQuestion(Number(button.getAttribute('data-go-question'))); });
+        });
+        form.addEventListener('change', updateNavigation);
+        document.getElementById('previousQuestion').addEventListener('click', function () { showQuestion(current - 1); });
+        document.getElementById('nextQuestion').addEventListener('click', function () { showQuestion(current + 1); });
+        document.getElementById('markForReview').addEventListener('click', function () {
+            reviewed[current] = !reviewed[current];
+            showQuestion(current);
+        });
+        document.getElementById('submitExam').addEventListener('click', function () { dialog.showModal(); });
+        document.getElementById('cancelSubmit').addEventListener('click', function () { dialog.close(); });
+        document.getElementById('confirmSubmit').addEventListener('click', function () {
+            confirmed = true;
+            submitted = true;
+            dialog.close();
+            form.requestSubmit();
+        });
+        form.addEventListener('submit', function (event) {
+            if (!confirmed) {
+                event.preventDefault();
+                dialog.showModal();
             }
+        });
+
+        function render(seconds) {
+            var minutes = Math.floor(seconds / 60);
+            var remainder = seconds % 60;
+            timerEl.textContent = (minutes < 10 ? '0' : '') + minutes + ':' + (remainder < 10 ? '0' : '') + remainder;
+            timerEl.classList.toggle('warning', seconds <= 300 && seconds > 60);
+            timerEl.classList.toggle('danger', seconds <= 60);
         }
 
         function tick() {
-            var secs = Math.max(0, Math.round((deadline - Date.now()) / 1000));
-            render(secs);
-            if (secs <= 0 && !submitted) {
+            var seconds = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+            render(seconds);
+            if (seconds <= 0 && !submitted) {
+                confirmed = true;
                 submitted = true;
-                form.submit();
+                form.requestSubmit();
                 return;
             }
-            setTimeout(tick, 250);
+            window.setTimeout(tick, 250);
         }
 
+        showQuestion(0);
         render(remaining);
         tick();
     })();

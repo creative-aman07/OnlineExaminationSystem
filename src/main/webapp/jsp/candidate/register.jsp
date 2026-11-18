@@ -7,41 +7,35 @@
     <title>Candidate Registration</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
-    <style>
-        body { background: linear-gradient(135deg, #07111f, #15253f); color: #f3f6ff; font-family: Arial, sans-serif; }
-        .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; box-shadow: 0 12px 35px rgba(0,0,0,0.25); }
-        .form-control { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16); color: #fff; }
-        .form-control::placeholder { color: #cfd8ff; }
-    </style>
 </head>
 <body>
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-6">
             <div class="glass p-4 p-lg-5">
-                <h2 class="mb-3">Candidate Registration</h2>
+                <h1 class="h2 fw-bold mb-3">Create your student account</h1>
                 <p class="text-light-emphasis">Create your student account to take exams and view your results.</p>
                 <% if (request.getAttribute("error") != null) { %>
-                <div class="alert alert-danger"><%= request.getAttribute("error") %></div>
+                <div class="alert alert-danger" role="alert"><%= request.getAttribute("error") %></div>
                 <% } %>
                 <form method="post" action="${pageContext.request.contextPath}/candidate">
                     <input type="hidden" name="_csrf" value="${csrfToken}" />
                     <input type="hidden" name="action" value="register" />
                     <div class="mb-3">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" class="form-control" name="fullName" required>
+                        <label class="form-label" for="fullName">Full Name</label>
+                        <input id="fullName" type="text" class="form-control" name="fullName" autocomplete="name" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Roll Number</label>
-                        <input type="text" class="form-control" name="rollNumber" required>
+                        <label class="form-label" for="rollNumber">Roll Number</label>
+                        <input id="rollNumber" type="text" class="form-control" name="rollNumber" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="email" autocomplete="email" required>
+                        <label class="form-label" for="registrationEmail">Email</label>
+                        <input id="registrationEmail" type="email" class="form-control" name="email" autocomplete="email" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-control" name="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
+                        <label class="form-label" for="registrationPassword">Password</label>
+                        <input id="registrationPassword" type="password" class="form-control" name="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Register & Continue</button>
                 </form>

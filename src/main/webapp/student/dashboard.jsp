@@ -21,45 +21,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: linear-gradient(135deg, #07111f, #0d1b2a, #15253f); color: #f3f6ff; font-family: 'Inter', Arial, sans-serif; min-height: 100vh; }
-        .sidebar { position: fixed; left: 0; top: 0; width: 260px; height: 100vh; background: rgba(7,17,31,0.95); backdrop-filter: blur(20px); border-right: 1px solid rgba(255,255,255,0.06); z-index: 100; padding: 1.5rem; display: flex; flex-direction: column; }
-        .sidebar-logo { color: #fff; text-decoration: none; font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
-        .sidebar-logo i { color: #4f7cff; font-size: 1.5rem; }
-        .sidebar-logo span { background: linear-gradient(135deg, #4f7cff, #00d9ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .sidebar-menu { list-style: none; padding: 0; flex: 1; }
-        .sidebar-menu li a { color: rgba(255,255,255,0.6); text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; font-weight: 500; font-size: 0.9rem; transition: all 0.3s; margin-bottom: 4px; }
-        .sidebar-menu li a:hover, .sidebar-menu li.active a { color: #fff; background: rgba(79,124,255,0.12); }
-        .sidebar-menu li.active a { color: #4f7cff; }
-        .sidebar-menu li a i { width: 20px; text-align: center; }
-        .main { margin-left: 260px; padding: 2rem; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .avatar { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #00d9ff, #00ff88); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; color: #07111f; }
-        .glass { background: rgba(255,255,255,0.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
-        .kpi-card { padding: 1.5rem; display: flex; align-items: center; gap: 1rem; }
-        .kpi-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
-        .kpi-blue { background: rgba(79,124,255,0.15); color: #4f7cff; }
-        .kpi-green { background: rgba(0,255,136,0.12); color: #00ff88; }
-        .kpi-purple { background: rgba(122,92,255,0.15); color: #7a5cff; }
-        .kpi-cyan { background: rgba(0,217,255,0.12); color: #00d9ff; }
-        .kpi-info h3 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0; }
-        .kpi-info p { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 0; }
-        .welcome-banner { padding: 2rem; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, rgba(0,217,255,0.08), rgba(0,255,136,0.06)); }
-        .welcome-banner h3 { font-weight: 700; margin-bottom: 0.3rem; }
-        .welcome-banner p { color: rgba(255,255,255,0.6); margin-bottom: 0; }
-        .welcome-icon i { font-size: 3rem; color: rgba(0,217,255,0.3); }
-        .action-card { display: flex; align-items: center; gap: 1rem; padding: 1.5rem; text-decoration: none; color: #f3f6ff; transition: all 0.3s; }
-        .action-card:hover { background: rgba(255,255,255,0.04); color: #fff; transform: translateY(-3px); }
-        .action-icon { font-size: 2rem; width: 50px; text-align: center; }
-        .action-card h5 { font-size: 1rem; font-weight: 600; margin-bottom: 2px; }
-        .action-card p { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-bottom: 0; }
-        @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; } }
-    </style>
 </head>
 <body>
     <!-- Sidebar -->
-    <nav class="sidebar">
+    <nav class="sidebar" id="dashboardSidebar" aria-label="Student navigation">
         <a href="${pageContext.request.contextPath}/" class="sidebar-logo">
             <i class="fas fa-graduation-cap"></i> Exam<span>Portal</span>
         </a>
@@ -76,7 +41,12 @@
     <!-- Main -->
     <div class="main">
         <div class="topbar">
-            <h4 class="fw-bold mb-0">Student Dashboard</h4>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-primary mobile-menu-toggle" id="menuToggle" type="button" aria-controls="dashboardSidebar" aria-expanded="false">
+                    <span class="visually-hidden">Toggle navigation</span><i class="fas fa-bars" aria-hidden="true"></i>
+                </button>
+                <h1 class="h4 fw-bold mb-0">Student Dashboard</h1>
+            </div>
             <div class="d-flex align-items-center gap-3">
                 <span class="small text-secondary"><%= userEmail %></span>
                 <div class="avatar"><%= initials %></div>
@@ -124,24 +94,56 @@
         <div class="row g-4">
             <div class="col-md-4">
                 <a href="${pageContext.request.contextPath}/candidate/tests" class="action-card glass">
-                    <i class="fas fa-play-circle action-icon" style="color:#4f7cff"></i>
+                    <i class="fas fa-play-circle action-icon"></i>
                     <div><h5>Take Exam</h5><p>Browse and start available exams</p></div>
                 </a>
             </div>
             <div class="col-md-4">
                 <a href="${pageContext.request.contextPath}/candidate/results" class="action-card glass">
-                    <i class="fas fa-poll action-icon" style="color:#00ff88"></i>
+                    <i class="fas fa-poll action-icon"></i>
                     <div><h5>View Results</h5><p>Check your scores and pass/fail status</p></div>
                 </a>
             </div>
             <div class="col-md-4">
                 <a href="${pageContext.request.contextPath}/candidate/analysis" class="action-card glass">
-                    <i class="fas fa-chart-line action-icon" style="color:#ffaa00"></i>
+                    <i class="fas fa-chart-line action-icon"></i>
                     <div><h5>Performance</h5><p>Track your progress over time</p></div>
                 </a>
             </div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            var sidebar = document.getElementById('dashboardSidebar');
+            var toggle = document.getElementById('menuToggle');
+            var mobile = window.matchMedia('(max-width: 767.98px)');
+            sidebar.inert = mobile.matches;
+            toggle.addEventListener('click', function () {
+                var open = sidebar.classList.toggle('is-open');
+                sidebar.inert = mobile.matches && !open;
+                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+            sidebar.addEventListener('click', function (event) {
+                if (mobile.matches && event.target.closest('a')) {
+                    sidebar.classList.remove('is-open');
+                    sidebar.inert = true;
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && mobile.matches) {
+                    sidebar.classList.remove('is-open');
+                    sidebar.inert = true;
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+            mobile.addEventListener('change', function (event) {
+                if (!event.matches) sidebar.classList.remove('is-open');
+                sidebar.inert = event.matches && !sidebar.classList.contains('is-open');
+                if (!event.matches) toggle.setAttribute('aria-expanded', 'false');
+            });
+        })();
+    </script>
 </body>
 </html>

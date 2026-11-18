@@ -10,20 +10,16 @@
     <title>Available Tests</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
-    <style>
-        body { background: linear-gradient(135deg, #07111f, #15253f); color: #f3f6ff; font-family: Arial, sans-serif; }
-        .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; box-shadow: 0 12px 35px rgba(0,0,0,0.25); }
-    </style>
 </head>
 <body>
 <div class="container py-5">
     <div class="glass p-4 p-lg-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <div>
-                <h2 class="mb-1">Available Tests</h2>
+                <h1 class="h2 fw-bold mb-1">Available Examinations</h1>
                 <p class="text-light-emphasis mb-0">Choose a test to begin your assessment.</p>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
                 <% if (session.getAttribute("candidate") == null) { %>
                 <a href="${pageContext.request.contextPath}/candidate/register" class="btn btn-primary">Create student account</a>
                 <a href="${pageContext.request.contextPath}/login" class="btn btn-outline-primary">Sign in</a>
@@ -34,10 +30,10 @@
             </div>
         </div>
         <% String error = (String) request.getAttribute("error"); if (error != null) { %>
-        <div class="alert alert-warning"><%= error %></div>
+        <div class="alert alert-warning" role="alert"><%= error %></div>
         <% } %>
         <% if (tests == null || tests.isEmpty()) { %>
-        <div class="alert alert-info">No tests are available yet.</div>
+        <div class="alert alert-info" role="status">No examinations are available yet.</div>
         <% } else { %>
         <div class="row g-4">
             <% for (TestItem test : tests) { %>

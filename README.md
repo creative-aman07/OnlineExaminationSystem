@@ -8,7 +8,7 @@ Browser -> Tomcat 10 WAR -> Jakarta Servlets/JSP -> HikariCP -> MySQL 8 private 
 
 The application is deployed from `Dockerfile` and the database from `database/Dockerfile`. The WAR is deployed as `ROOT.war`.
 
-The UI uses a shared light theme with navy primary (`#142B4A`), indigo actions (`#4F46E5`), and slate text. The common tokens live in `src/main/webapp/css/app-theme.css`.
+The UI uses a shared light theme with navy primary (`#172554`), indigo actions (`#4F46E5`), blue accents (`#3B82F6`), and slate text. The common design tokens and responsive components live in `src/main/webapp/css/app-theme.css`.
 
 ## Student workflow
 
