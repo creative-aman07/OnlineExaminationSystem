@@ -169,12 +169,10 @@ textarea:focus-visible, summary:focus-visible {
 .action-card h5 { margin-bottom: 2px; font-size: .95rem; font-weight: 600; }
 .kpi-info h3 { color: var(--primary); }
 
-.text-white, .text-light, .text-light-emphasis, .text-secondary,
-.card-title, .card-text, .card-body, .table-dark, .bg-dark {
-  color: var(--text) !important;
-}
+.text-white { color: #ffffff !important; }
 .text-secondary, .text-light-emphasis { color: var(--muted) !important; }
-.bg-dark, .card.bg-dark, .table-dark { background-color: var(--surface) !important; }
+.card-title { color: var(--text); font-weight: 600; }
+.card-text { color: var(--muted); }
 .table {
   --bs-table-color: var(--text);
   --bs-table-bg: var(--surface);

@@ -21,12 +21,5 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 # Copy our WAR as ROOT (deploys at /)
 COPY --from=builder /app/target/ROOT.war /usr/local/tomcat/webapps/ROOT.war
 
-# The app reads these environment variables for database config:
-#   JDBC_URL       - full JDBC URL (highest priority)
-#   DB_USER        - database username
-#   DB_PASSWORD    - database password
-# OR Railway-style:
-#   MYSQLHOST, MYSQLPORT, MYSQL_DATABASE, MYSQLUSER, MYSQLPASSWORD
-
-EXPOSE 8080
-CMD ["sh", "-c", "PORT_VALUE=${PORT:-10000}; sed -i 's/port=\"8080\"/port=\"'\"$PORT_VALUE\"'\"/' /usr/local/tomcat/conf/server.xml; exec catalina.sh run"]
+EXPOSE 8080 10000
+CMD ["sh", "-c", "if [ -n \"$PORT\" ] && [ \"$PORT\" != \"8080\" ]; then sed -i 's/port=\"8080\"/port=\"'\"$PORT\"'\"/' /usr/local/tomcat/conf/server.xml; fi; exec catalina.sh run"]

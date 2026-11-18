@@ -9,56 +9,78 @@ import jakarta.servlet.annotation.WebListener;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Enumeration;
 
 @WebListener
 public class DatabaseInitializer implements ServletContextListener {
     private static final int MAX_RETRIES = 5;
-    private static final long RETRY_DELAY_MS = 2000;
+    private static final long RETRY_DELAY_MS = 1500;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        String sql = loadSchema();
-        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-            try (Connection conn = DBConnection.getConnection(); Statement stmt = conn.createStatement()) {
-                if (sql != null) {
-                    runStatements(stmt, sql);
-                }
-                seedRoles(conn);
-                seedDemoQuestions(conn);
-                seedDemoTests(conn);
-                seedDemoUsersAndCandidates(conn);
-                seedDemoResults(conn);
-                System.out.println("DatabaseInitializer: schema and demo data initialized successfully");
-                return;
-            } catch (SQLException e) {
-                System.err.println("DatabaseInitializer attempt " + attempt + "/" + MAX_RETRIES + " failed: " + e.getMessage());
-                if (attempt < MAX_RETRIES) {
-                    try {
-                        Thread.sleep(RETRY_DELAY_MS);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        return;
+        try {
+            String sql = loadSchema();
+            for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                try (Connection conn = DBConnection.getConnection(); Statement stmt = conn.createStatement()) {
+                    if (sql != null) {
+                        runStatements(stmt, sql);
+                    }
+                    seedRoles(conn);
+                    seedDemoQuestions(conn);
+                    seedDemoTests(conn);
+                    seedDemoUsersAndCandidates(conn);
+                    seedDemoResults(conn);
+                    System.out.println("DatabaseInitializer: schema and demo data initialized successfully");
+                    return;
+                } catch (Throwable e) {
+                    System.err.println("DatabaseInitializer attempt " + attempt + "/" + MAX_RETRIES + " failed: " + e.getMessage());
+                    if (attempt < MAX_RETRIES) {
+                        try {
+                            Thread.sleep(RETRY_DELAY_MS);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
                     }
                 }
             }
+            System.err.println("DatabaseInitializer: giving up after " + MAX_RETRIES + " attempts (application will still serve UI)");
+        } catch (Throwable t) {
+            // Never let listener throw to Tomcat, to prevent 'Context [] startup failed'
+            System.err.println("DatabaseInitializer caught fatal error: " + t.getMessage());
+            t.printStackTrace();
         }
-        System.err.println("DatabaseInitializer: giving up after " + MAX_RETRIES + " attempts");
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        DBConnection.close();
+        try {
+            DBConnection.close();
+        } catch (Throwable ignored) {}
+
+        try {
+            com.mysql.cj.jdbc.AbandonedConnectionCleanupThread.checkedShutdown();
+        } catch (Throwable ignored) {}
+
+        try {
+            Enumeration<Driver> drivers = DriverManager.getDrivers();
+            while (drivers.hasMoreElements()) {
+                Driver driver = drivers.nextElement();
+                DriverManager.deregisterDriver(driver);
+            }
+        } catch (Throwable ignored) {}
     }
 
     private void runStatements(Statement stmt, String sql) throws SQLException {
         for (String segment : sql.split(";")) {
             String cleaned = segment.trim();
             if (cleaned.isEmpty()) continue;
-            // Ignore comment lines if whole segment is comment
             if (cleaned.startsWith("--") || cleaned.startsWith("/*")) {
                 String[] lines = cleaned.split("\r?\n");
                 StringBuilder sb = new StringBuilder();
@@ -74,7 +96,6 @@ public class DatabaseInitializer implements ServletContextListener {
             try {
                 stmt.execute(cleaned);
             } catch (SQLException e) {
-                // Ignore harmless duplicate table / duplicate key / column exists errors
                 int code = e.getErrorCode();
                 if (code == 1050 || code == 1060 || code == 1061 || code == 1062 || code == 23505) continue;
                 String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
@@ -162,7 +183,6 @@ public class DatabaseInitializer implements ServletContextListener {
             }
         }
 
-        // Link questions to tests
         int[][] testQuestionLinks = {
             // Test 1: Questions 1 - 6
             {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {1, 6},
@@ -183,7 +203,6 @@ public class DatabaseInitializer implements ServletContextListener {
     }
 
     private void seedDemoUsersAndCandidates(Connection conn) throws SQLException {
-        // 1. Ensure candidate for Demo Student exists
         int demoCandidateId = 0;
         try (PreparedStatement check = conn.prepareStatement("SELECT candidate_id FROM candidates WHERE roll_number = ?")) {
             check.setString(1, "STUDENT001");
@@ -207,7 +226,7 @@ public class DatabaseInitializer implements ServletContextListener {
             }
         }
 
-        // 2. Seed Admin user (admin@exam.com / password123)
+        // Admin user
         try (PreparedStatement check = conn.prepareStatement("SELECT user_id FROM users WHERE email = ?")) {
             check.setString(1, "admin@exam.com");
             try (ResultSet rs = check.executeQuery()) {
@@ -222,7 +241,7 @@ public class DatabaseInitializer implements ServletContextListener {
             }
         }
 
-        // 3. Seed Student user (student@exam.com / password123)
+        // Student user
         try (PreparedStatement check = conn.prepareStatement("SELECT user_id FROM users WHERE email = ?")) {
             check.setString(1, "student@exam.com");
             try (ResultSet rs = check.executeQuery()) {
@@ -235,7 +254,6 @@ public class DatabaseInitializer implements ServletContextListener {
                         insert.executeUpdate();
                     }
                 } else {
-                    // Update candidate_id if null
                     try (PreparedStatement update = conn.prepareStatement(
                             "UPDATE users SET candidate_id = ? WHERE email = ? AND (candidate_id IS NULL OR candidate_id <= 0)")) {
                         update.setInt(1, demoCandidateId);
@@ -246,7 +264,7 @@ public class DatabaseInitializer implements ServletContextListener {
             }
         }
 
-        // 4. Ensure ANY original or existing student user has a linked candidate record
+        // Link any unlinked student accounts
         try (PreparedStatement findOrphans = conn.prepareStatement(
                 "SELECT user_id, email FROM users WHERE role_id = 2 AND (candidate_id IS NULL OR candidate_id <= 0)")) {
             try (ResultSet rs = findOrphans.executeQuery()) {
@@ -290,7 +308,6 @@ public class DatabaseInitializer implements ServletContextListener {
     }
 
     private void seedDemoResults(Connection conn) throws SQLException {
-        // Find Demo Student candidate id
         int candidateId = 0;
         try (PreparedStatement check = conn.prepareStatement("SELECT candidate_id FROM candidates WHERE roll_number = ?")) {
             check.setString(1, "STUDENT001");

@@ -21,10 +21,6 @@
         
     </session-config>
 
-    <listener>
-        <listener-class>com.examportal.listener.DatabaseInitializer</listener-class>
-    </listener>
-
     <error-page>
         <error-code>404</error-code>
         <location>/error404.jsp</location>
