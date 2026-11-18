@@ -39,7 +39,7 @@ mvn clean package
 ## Database
 
 - Full schema: `database/schema.sql`
-- Seed data: `database/seed.sql`
+- Role data: `database/seed.sql`
 - Application repeatable schema: `src/main/resources/schema.sql`
 - Initialization runs only at application startup and uses idempotent `CREATE TABLE IF NOT EXISTS` statements. It does not recreate or delete production data.
 
@@ -115,13 +115,6 @@ mysql -h <MYSQL_HOST> -P 3306 -u <MYSQL_USER> -p -e "SELECT COUNT(*) FROM examdb
 ```
 
 Store backups outside the MySQL container or disk and verify a restore periodically.
-
-## Demo accounts
-
-Database initialization creates BCrypt-backed demo accounts:
-
-- Admin: `admin@exam.com` / `password123`
-- Student: `student@exam.com` / `password123`
 
 ## Security
 

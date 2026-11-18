@@ -246,13 +246,6 @@ certbot --nginx -d yourdomain.com
 
 ---
 
-## 🧪 Demo Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@exam.com | password123 |
-| Student | student@exam.com | password123 |
-
 ---
 
 ## 📝 Application URLs
