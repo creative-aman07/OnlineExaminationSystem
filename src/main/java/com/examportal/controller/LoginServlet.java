@@ -1,7 +1,14 @@
 package com.examportal.controller;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import com.examportal.model.Candidate;
+import com.examportal.service.ExamService;
 
+import com.examportal.util.AuthUtil;
+import com.examportal.util.DBConnection;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -21,6 +28,15 @@ public class LoginServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/");
             return;
         }
+        HttpSession session = req.getSession(false);
+        if (session != null && "admin".equals(session.getAttribute("role"))) {
+            resp.sendRedirect(req.getContextPath() + "/faculty/dashboard.jsp");
+            return;
+        }
+        if (session != null && "student".equals(session.getAttribute("role"))) {
+            resp.sendRedirect(req.getContextPath() + "/student/dashboard.jsp");
+            return;
+        }
         req.getRequestDispatcher("/login.jsp").forward(req, resp);
     }
 
@@ -28,24 +44,35 @@ public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
-
-        // Demo credentials
-        if ("admin@exam.com".equalsIgnoreCase(email) && "password123".equals(password)) {
-            HttpSession s = req.getSession(true);
-            s.setAttribute("role", "admin");
-            s.setAttribute("userEmail", email);
-            resp.sendRedirect(req.getContextPath() + "/faculty/dashboard.jsp");
+        String sql = "SELECT r.role_name, u.password_hash, u.candidate_id FROM users u " +
+                "JOIN roles r ON r.role_id = u.role_id " +
+                "WHERE u.email = ? AND u.active = TRUE";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, email == null ? "" : email.trim().toLowerCase());
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next() && AuthUtil.verifyPassword(password, rs.getString("password_hash"))) {
+                    HttpSession session = req.getSession(true);
+                    session.invalidate();
+                    session = req.getSession(true);
+                    String role = rs.getString("role_name");
+                    session.setAttribute("role", role);
+                    session.setAttribute("userEmail", email.trim().toLowerCase());
+                    int candidateId = rs.getInt("candidate_id");
+                    if ("student".equals(role) && candidateId > 0) {
+                        Candidate candidate = new ExamService().getCandidate(candidateId);
+                        if (candidate != null) session.setAttribute("candidate", candidate);
+                    }
+                    resp.sendRedirect(req.getContextPath() + ("admin".equals(role)
+                            ? "/faculty/dashboard.jsp" : "/student/dashboard.jsp"));
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            req.setAttribute("error", "Login is temporarily unavailable.");
+            req.getRequestDispatcher("/login.jsp").forward(req, resp);
             return;
         }
-        if ("student@exam.com".equalsIgnoreCase(email) && "password123".equals(password)) {
-            HttpSession s = req.getSession(true);
-            s.setAttribute("role", "student");
-            s.setAttribute("userEmail", email);
-            resp.sendRedirect(req.getContextPath() + "/student/dashboard.jsp");
-            return;
-        }
-
-        // Fallback: invalid credentials
         req.setAttribute("error", "Invalid credentials");
         req.getRequestDispatcher("/login.jsp").forward(req, resp);
     }

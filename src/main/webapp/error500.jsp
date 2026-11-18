@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Server Error</title>
     <link href="${pageContext.request.contextPath}/css/style.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
 </head>
 <body class="auth-body">
 <div class="auth-container">

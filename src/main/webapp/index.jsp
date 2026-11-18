@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: linear-gradient(135deg, #07111f 0%, #0d1b2a 40%, #15253f 100%); color: #f3f6ff; font-family: 'Inter', Arial, sans-serif; min-height: 100vh; }
@@ -55,8 +56,6 @@
             <ul class="navbar-nav ms-auto align-items-center gap-2">
                 <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/candidate/register"><i class="fas fa-user-plus me-1"></i>Register</a></li>
                 <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/candidate/tests"><i class="fas fa-file-alt me-1"></i>Tests</a></li>
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/candidate/results"><i class="fas fa-chart-bar me-1"></i>Results</a></li>
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/question-bank"><i class="fas fa-database me-1"></i>Question Bank</a></li>
                 <li class="nav-item"><a class="btn btn-cyber btn-sm ms-2" href="${pageContext.request.contextPath}/login"><i class="fas fa-sign-in-alt me-1"></i>Login</a></li>
             </ul>
         </div>
@@ -73,7 +72,7 @@
                 <a href="${pageContext.request.contextPath}/candidate/register" class="btn btn-cyber btn-lg"><i class="fas fa-user-plus me-2"></i>Register Now</a>
                 <a href="${pageContext.request.contextPath}/candidate/tests" class="btn btn-outline-cyber btn-lg"><i class="fas fa-play me-2"></i>Start Test</a>
             </div>
-            <p class="small text-secondary mt-2"><i class="fas fa-info-circle me-1"></i>Demo login: <code>admin@exam.com</code> / <code>password123</code></p>
+            <p class="small text-secondary mt-2"><i class="fas fa-info-circle me-1"></i>Students can register or sign in to take an exam and track their results.</p>
         </div>
         <div class="col-lg-5 mt-4 mt-lg-0">
             <div class="glass p-4">
@@ -103,7 +102,7 @@
             </a>
         </div>
         <div class="col-md-4 animate-in">
-            <a href="${pageContext.request.contextPath}/question-bank" class="feature-card">
+            <a href="${pageContext.request.contextPath}/login" class="feature-card">
                 <div class="feature-icon icon-green"><i class="fas fa-database"></i></div>
                 <h6 class="fw-semibold mb-1">Question Bank</h6>
                 <p class="small text-light-emphasis mb-0">Add, view and manage MCQ questions for exams</p>
@@ -117,17 +116,17 @@
             </a>
         </div>
         <div class="col-md-4 animate-in">
-            <a href="${pageContext.request.contextPath}/candidate/results" class="feature-card">
+            <a href="${pageContext.request.contextPath}/candidate/register" class="feature-card">
                 <div class="feature-icon icon-cyan"><i class="fas fa-chart-bar"></i></div>
-                <h6 class="fw-semibold mb-1">Result Generation</h6>
-                <p class="small text-light-emphasis mb-0">Automatic grading with pass/fail status and score breakdown</p>
+                <h6 class="fw-semibold mb-1">Student Sign In</h6>
+                <p class="small text-light-emphasis mb-0">Sign in to review your results and assessment history</p>
             </a>
         </div>
         <div class="col-md-4 animate-in">
-            <a href="${pageContext.request.contextPath}/candidate/analysis" class="feature-card">
+            <a href="${pageContext.request.contextPath}/login" class="feature-card">
                 <div class="feature-icon icon-orange"><i class="fas fa-chart-line"></i></div>
                 <h6 class="fw-semibold mb-1">Performance Analysis</h6>
-                <p class="small text-light-emphasis mb-0">Track candidate performance with detailed analytics</p>
+                <p class="small text-light-emphasis mb-0">Sign in to track your scores and assessment history</p>
             </a>
         </div>
         <div class="col-md-4 animate-in">

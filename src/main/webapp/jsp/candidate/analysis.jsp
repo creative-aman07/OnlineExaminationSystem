@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Analysis</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
     <style>
         body { background: linear-gradient(135deg, #07111f, #15253f); color: #f3f6ff; font-family: Arial, sans-serif; }
         .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; box-shadow: 0 12px 35px rgba(0,0,0,0.25); }
@@ -30,7 +31,10 @@
         <% } else { %>
         <div class="alert alert-info">No performance data yet.</div>
         <% } %>
-        <a href="${pageContext.request.contextPath}/candidate/results" class="btn btn-outline-light mt-3">Back to Results</a>
+        <div class="d-flex gap-2 mt-3">
+            <a href="${pageContext.request.contextPath}/candidate/results" class="btn btn-outline-light">Back to Results</a>
+            <a href="${pageContext.request.contextPath}/candidate/tests" class="btn btn-primary">Browse Exams</a>
+        </div>
     </div>
 </div>
 </body>

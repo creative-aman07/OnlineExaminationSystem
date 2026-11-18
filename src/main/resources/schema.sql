@@ -69,6 +69,38 @@ CREATE TABLE IF NOT EXISTS exam_attempts (
     FOREIGN KEY (test_id) REFERENCES tests(test_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS roles (
+    role_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role_id BIGINT NOT NULL,
+    candidate_id BIGINT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(role_id),
+    FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS student_answers (
+    answer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    attempt_id BIGINT NOT NULL,
+    question_id BIGINT NOT NULL,
+    selected_answer VARCHAR(2) NULL,
+    is_marked_for_review BOOLEAN NOT NULL DEFAULT FALSE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_attempt_question (attempt_id, question_id),
+    FOREIGN KEY (attempt_id) REFERENCES exam_attempts(attempt_id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO roles (role_id, role_name) VALUES (1, 'admin'), (2, 'student');
+
 INSERT IGNORE INTO questions (question_id, subject, question_text, option_a, option_b, option_c, option_d, correct_answer, marks) VALUES
 (1, 'Java', 'Which keyword is used to create an object in Java?', 'new', 'class', 'this', 'void', 'A', 1),
 (2, 'Java', 'Which of these is NOT a Java primitive type?', 'int', 'boolean', 'String', 'double', 'C', 1),

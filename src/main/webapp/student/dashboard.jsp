@@ -20,6 +20,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: linear-gradient(135deg, #07111f, #0d1b2a, #15253f); color: #f3f6ff; font-family: 'Inter', Arial, sans-serif; min-height: 100vh; }
@@ -67,7 +68,7 @@
             <li><a href="${pageContext.request.contextPath}/candidate/tests"><i class="fas fa-file-alt"></i> Available Tests</a></li>
             <li><a href="${pageContext.request.contextPath}/candidate/results"><i class="fas fa-poll"></i> My Results</a></li>
             <li><a href="${pageContext.request.contextPath}/candidate/analysis"><i class="fas fa-chart-line"></i> Performance</a></li>
-            <li><a href="${pageContext.request.contextPath}/candidate/register"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="${pageContext.request.contextPath}/candidate/tests"><i class="fas fa-user"></i> Browse Exams</a></li>
             <li style="margin-top: auto"><a href="${pageContext.request.contextPath}/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </nav>

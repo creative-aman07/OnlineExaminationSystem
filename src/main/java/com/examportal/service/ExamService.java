@@ -21,19 +21,21 @@ public class ExamService {
     private final ResultDao resultDao = new ResultDao();
     private final ExamAttemptDao attemptDao = new ExamAttemptDao();
 
-    public Candidate registerCandidate(String fullName, String rollNumber, String email) throws SQLException {
+    public Candidate registerCandidate(String fullName, String rollNumber, String email, String password) throws SQLException {
         if (fullName == null || fullName.isBlank() || rollNumber == null || rollNumber.isBlank()) {
             throw new IllegalArgumentException("Name and roll number are required.");
         }
-        Optional<Candidate> existing = candidateDao.findByRollNumber(rollNumber);
-        if (existing.isPresent()) {
-            throw new IllegalArgumentException("Roll number is already registered.");
+        if (email == null || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new IllegalArgumentException("A valid email address is required.");
         }
+        Optional<Candidate> existing = candidateDao.findByRollNumber(rollNumber);
+        if (existing.isPresent()) throw new IllegalArgumentException("Roll number is already registered.");
+        if (password == null || password.length() < 8) throw new IllegalArgumentException("Password must be at least 8 characters.");
         Candidate candidate = new Candidate();
         candidate.setFullName(fullName.trim());
         candidate.setRollNumber(rollNumber.trim().toUpperCase());
-        candidate.setEmail(email == null ? "" : email.trim());
-        return candidateDao.save(candidate);
+        candidate.setEmail(email == null ? "" : email.trim().toLowerCase());
+        return candidateDao.save(candidate, password);
     }
 
     public List<Question> listQuestions() throws SQLException {

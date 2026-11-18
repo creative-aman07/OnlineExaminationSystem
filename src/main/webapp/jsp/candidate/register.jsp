@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Registration</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
     <style>
         body { background: linear-gradient(135deg, #07111f, #15253f); color: #f3f6ff; font-family: Arial, sans-serif; }
         .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; box-shadow: 0 12px 35px rgba(0,0,0,0.25); }
@@ -19,11 +20,12 @@
         <div class="col-lg-6">
             <div class="glass p-4 p-lg-5">
                 <h2 class="mb-3">Candidate Registration</h2>
-                <p class="text-light-emphasis">Register to access available tests and view your results.</p>
+                <p class="text-light-emphasis">Create your student account to take exams and view your results.</p>
                 <% if (request.getAttribute("error") != null) { %>
                 <div class="alert alert-danger"><%= request.getAttribute("error") %></div>
                 <% } %>
                 <form method="post" action="${pageContext.request.contextPath}/candidate">
+                    <input type="hidden" name="_csrf" value="${csrfToken}" />
                     <input type="hidden" name="action" value="register" />
                     <div class="mb-3">
                         <label class="form-label">Full Name</label>
@@ -35,12 +37,18 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="email" placeholder="optional">
+                        <input type="email" class="form-control" name="email" autocomplete="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Register & Continue</button>
                 </form>
                 <div class="mt-3 text-center">
-                    <a href="${pageContext.request.contextPath}/" class="text-light">Back to Home</a>
+                    <a href="${pageContext.request.contextPath}/login">Already have an account? Sign in</a>
+                    <span class="mx-2">|</span>
+                    <a href="${pageContext.request.contextPath}/">Home</a>
                 </div>
             </div>
         </div>

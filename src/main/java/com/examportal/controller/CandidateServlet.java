@@ -25,10 +25,30 @@ public class CandidateServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getPathInfo();
         if (path == null || "/".equals(path)) {
+            HttpSession session = req.getSession(false);
+            if (session != null && "student".equals(session.getAttribute("role"))
+                    && session.getAttribute("candidate") != null) {
+                resp.sendRedirect(req.getContextPath() + "/candidate/tests");
+                return;
+            }
+            if (session != null && "admin".equals(session.getAttribute("role"))) {
+                resp.sendRedirect(req.getContextPath() + "/faculty/dashboard.jsp");
+                return;
+            }
             req.getRequestDispatcher("/jsp/candidate/register.jsp").forward(req, resp);
             return;
         }
         if ("/register".equals(path)) {
+            HttpSession session = req.getSession(false);
+            if (session != null && "student".equals(session.getAttribute("role"))
+                    && session.getAttribute("candidate") != null) {
+                resp.sendRedirect(req.getContextPath() + "/candidate/tests");
+                return;
+            }
+            if (session != null && "admin".equals(session.getAttribute("role"))) {
+                resp.sendRedirect(req.getContextPath() + "/faculty/dashboard.jsp");
+                return;
+            }
             req.getRequestDispatcher("/jsp/candidate/register.jsp").forward(req, resp);
             return;
         }
@@ -146,14 +166,18 @@ public class CandidateServlet extends HttpServlet {
         String fullName = req.getParameter("fullName");
         String rollNumber = req.getParameter("rollNumber");
         String email = req.getParameter("email");
+        String password = req.getParameter("password");
         try {
-            Candidate candidate = examService.registerCandidate(fullName, rollNumber, email);
+            Candidate candidate = examService.registerCandidate(fullName, rollNumber, email, password);
             HttpSession session = req.getSession(true);
             session.setAttribute("candidate", candidate);
             session.setAttribute("candidateId", candidate.getCandidateId());
+            session.setAttribute("role", "student");
+            session.setAttribute("userEmail", candidate.getEmail());
             resp.sendRedirect(req.getContextPath() + "/candidate/tests");
         } catch (Exception e) {
-            req.setAttribute("error", e.getMessage());
+            req.setAttribute("error", e instanceof IllegalArgumentException
+                    ? e.getMessage() : "Registration could not be completed. Check your email and roll number, then try again.");
             req.getRequestDispatcher("/jsp/candidate/register.jsp").forward(req, resp);
         }
     }

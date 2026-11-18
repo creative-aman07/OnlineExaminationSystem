@@ -20,6 +20,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/css/app-theme.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: linear-gradient(135deg, #07111f, #0d1b2a, #15253f); color: #f3f6ff; font-family: 'Inter', Arial, sans-serif; min-height: 100vh; }
@@ -69,8 +70,7 @@
             <li class="active"><a href="${pageContext.request.contextPath}/faculty/dashboard.jsp"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="${pageContext.request.contextPath}/question-bank"><i class="fas fa-database"></i> Question Bank</a></li>
             <li><a href="${pageContext.request.contextPath}/candidate/tests"><i class="fas fa-file-alt"></i> View Tests</a></li>
-            <li><a href="${pageContext.request.contextPath}/candidate/results"><i class="fas fa-chart-bar"></i> View Results</a></li>
-            <li><a href="${pageContext.request.contextPath}/candidate/register"><i class="fas fa-user-plus"></i> Register Candidate</a></li>
+            <li><a href="${pageContext.request.contextPath}/"><i class="fas fa-home"></i> Home</a></li>
             <li style="margin-top: auto"><a href="${pageContext.request.contextPath}/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </nav>
@@ -135,13 +135,9 @@
                         <i class="fas fa-clipboard-list action-icon"></i>
                         <div><h5>View All Tests</h5><p>See available tests and their status</p></div>
                     </a>
-                    <a href="${pageContext.request.contextPath}/candidate/register" class="action-card glass">
-                        <i class="fas fa-user-plus action-icon"></i>
-                        <div><h5>Register Candidate</h5><p>Enroll a new candidate for exams</p></div>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/candidate/results" class="action-card glass">
-                        <i class="fas fa-chart-bar action-icon"></i>
-                        <div><h5>Examination Reports</h5><p>View candidate scores and pass/fail status</p></div>
+                    <a href="${pageContext.request.contextPath}/candidate/tests" class="action-card glass">
+                        <i class="fas fa-eye action-icon"></i>
+                        <div><h5>Preview Exams</h5><p>Check published exams as students see them</p></div>
                     </a>
                 </div>
             </div>

@@ -29,4 +29,4 @@ COPY --from=builder /app/target/ROOT.war /usr/local/tomcat/webapps/ROOT.war
 #   MYSQLHOST, MYSQLPORT, MYSQL_DATABASE, MYSQLUSER, MYSQLPASSWORD
 
 EXPOSE 8080
-CMD ["catalina.sh", "run"]
+CMD ["sh", "-c", "PORT_VALUE=${PORT:-10000}; sed -i 's/port=\"8080\"/port=\"'\"$PORT_VALUE\"'\"/' /usr/local/tomcat/conf/server.xml; exec catalina.sh run"]

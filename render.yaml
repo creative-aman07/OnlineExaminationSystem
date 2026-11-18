@@ -1,0 +1,56 @@
+services:
+  - type: pserv
+    name: examportal-mysql
+    runtime: docker
+    dockerfilePath: ./database/Dockerfile
+    dockerContext: ./database
+    envVars:
+      - key: MYSQL_DATABASE
+        value: examdb
+      - key: MYSQL_USER
+        value: examuser
+      - key: MYSQL_PASSWORD
+        generateValue: true
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+
+  - type: web
+    name: examportal-app
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DB_HOST
+        value: examportal-mysql
+      - key: DB_PORT
+        value: 3306
+      - key: DB_NAME
+        value: examdb
+      - key: DB_USERNAME
+        value: examuser
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: examportal-mysql
+          envVarKey: MYSQL_PASSWORD
+      - key: DB_DRIVER
+        value: com.mysql.cj.jdbc.Driver
+      - key: DB_SSL
+        value: false
+      - key: DB_TIMEZONE
+        value: UTC
+      - key: DB_POOL_ENABLED
+        value: true
+      - key: DB_POOL_MIN
+        value: 2
+      - key: DB_POOL_MAX
+        value: 10
+      - key: DB_CONNECTION_TIMEOUT
+        value: 30000
+      - key: DB_QUERY_TIMEOUT
+        value: 30
