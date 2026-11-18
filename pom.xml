@@ -71,6 +71,13 @@
             <artifactId>HikariCP</artifactId>
             <version>5.1.0</version>
         </dependency>
+        <!-- JUnit 5 for Automated Verification -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

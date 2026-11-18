@@ -1,5 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ page import="com.examportal.service.ExamService" %>
+<%@ page import="com.examportal.model.Result" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
 <%
     // Protect: must be logged in as admin
     String role = (String) session.getAttribute("role");
@@ -10,6 +13,10 @@
     String userEmail = (String) session.getAttribute("userEmail");
     if (userEmail == null) userEmail = "Admin";
     String initials = String.valueOf(userEmail.charAt(0)).toUpperCase();
+
+    ExamService examService = new ExamService();
+    Map<String, Object> stats = examService.getFacultyDashboardStats();
+    List<Result> recentResults = examService.listRecentSubmissions(5);
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -47,114 +54,143 @@
                 <h1 class="h4 fw-bold mb-0">Faculty Dashboard</h1>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <span class="small text-secondary"><%= userEmail %></span>
+                <span class="small text-secondary"><%= userEmail %> (Administrator)</span>
                 <div class="avatar"><%= initials %></div>
             </div>
         </div>
 
-        <!-- Welcome -->
+        <!-- Welcome Banner -->
         <div class="glass welcome-banner mb-4">
             <div>
-                <h3>Welcome, Admin! 👨‍🏫</h3>
-                <p>Manage exams, questions, and review candidate performance</p>
+                <h3>Welcome, Administrator! 👨‍🏫</h3>
+                <p>Manage examinations, question bank items, and review candidate assessment submissions.</p>
             </div>
             <div class="welcome-icon"><i class="fas fa-chalkboard-teacher"></i></div>
         </div>
 
-        <!-- KPI Cards -->
+        <!-- Dynamic KPI Cards -->
         <div class="row g-4 mb-4">
-            <div class="col-md-3">
+            <div class="col-md-6 col-lg-3">
                 <div class="glass kpi-card">
                     <div class="kpi-icon kpi-blue"><i class="fas fa-file-alt"></i></div>
-                    <div class="kpi-info"><h3>—</h3><p>Total Tests</p></div>
+                    <div class="kpi-info">
+                        <h3><%= stats.get("totalTests") %></h3>
+                        <p>Total Exams</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6 col-lg-3">
                 <div class="glass kpi-card">
                     <div class="kpi-icon kpi-green"><i class="fas fa-question-circle"></i></div>
-                    <div class="kpi-info"><h3>—</h3><p>Questions</p></div>
+                    <div class="kpi-info">
+                        <h3><%= stats.get("totalQuestions") %></h3>
+                        <p>Question Bank</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6 col-lg-3">
                 <div class="glass kpi-card">
                     <div class="kpi-icon kpi-purple"><i class="fas fa-users"></i></div>
-                    <div class="kpi-info"><h3>—</h3><p>Candidates</p></div>
+                    <div class="kpi-info">
+                        <h3><%= stats.get("totalCandidates") %></h3>
+                        <p>Registered Students</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-6 col-lg-3">
                 <div class="glass kpi-card">
                     <div class="kpi-icon kpi-cyan"><i class="fas fa-check-circle"></i></div>
-                    <div class="kpi-info"><h3>—</h3><p>Submissions</p></div>
+                    <div class="kpi-info">
+                        <h3><%= stats.get("totalSubmissions") %></h3>
+                        <p>Submissions</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Recent Submissions & Management -->
         <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="glass p-4">
-                    <h5 class="fw-semibold mb-3"><i class="fas fa-bolt me-2" style="color:#ffaa00"></i>Quick Actions</h5>
-                    <a href="${pageContext.request.contextPath}/question-bank" class="action-card glass">
-                        <i class="fas fa-database action-icon"></i>
-                        <div><h5>Manage Questions</h5><p>Add, view, delete questions in the question bank</p></div>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/candidate/tests" class="action-card glass">
-                        <i class="fas fa-clipboard-list action-icon"></i>
-                        <div><h5>View All Tests</h5><p>See available tests and their status</p></div>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/candidate/tests" class="action-card glass">
-                        <i class="fas fa-eye action-icon"></i>
-                        <div><h5>Preview Exams</h5><p>Check published exams as students see them</p></div>
-                    </a>
+            <div class="col-lg-8">
+                <div class="glass p-4 h-100">
+                    <h5 class="fw-semibold mb-3"><i class="fas fa-history me-2 text-primary"></i>Recent Exam Submissions</h5>
+                    <% if (recentResults == null || recentResults.isEmpty()) { %>
+                    <div class="alert alert-info small mb-0">No submissions recorded yet.</div>
+                    <% } else { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Candidate ID</th>
+                                    <th>Exam Name</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% for (Result r : recentResults) { %>
+                                <tr>
+                                    <td><span class="badge text-bg-light border">#<%= r.getCandidateId() %></span></td>
+                                    <td class="fw-medium"><%= r.getTestName() %></td>
+                                    <td><%= r.getScore() %> / <%= r.getTotalQuestions() %></td>
+                                    <td><strong><%= String.format("%.1f", r.getPercentage()) %>%</strong></td>
+                                    <td>
+                                        <span class="badge <%= r.isPassed() ? "bg-success-subtle text-success border border-success-subtle" : "bg-danger-subtle text-danger border border-danger-subtle" %>">
+                                            <%= r.isPassed() ? "Passed" : "Failed" %>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } %>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="glass p-4">
-                    <h5 class="fw-semibold mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>System Info</h5>
-                    <table class="table mb-0">
-                        <tbody>
-                            <tr><th class="ps-0">Platform</th><td>Java 21 + Jakarta EE 10</td></tr>
-                            <tr><th class="ps-0">Server</th><td>Apache Tomcat 10.x</td></tr>
-                            <tr><th class="ps-0">Database</th><td>MySQL 8.0</td></tr>
-                            <tr><th class="ps-0">Build Tool</th><td>Apache Maven</td></tr>
-                            <tr><th class="ps-0">Version</th><td>2.0.0</td></tr>
-                        </tbody>
-                    </table>
+
+            <div class="col-lg-4">
+                <div class="glass p-4 h-100">
+                    <h5 class="fw-semibold mb-3"><i class="fas fa-bolt me-2 text-warning"></i>Management Actions</h5>
+                    <div class="d-grid gap-2">
+                        <a href="${pageContext.request.contextPath}/question-bank" class="action-card glass">
+                            <i class="fas fa-database action-icon"></i>
+                            <div><h5>Question Bank</h5><p>Add & manage MCQs</p></div>
+                        </a>
+                        <a href="${pageContext.request.contextPath}/candidate/tests" class="action-card glass">
+                            <i class="fas fa-file-alt action-icon"></i>
+                            <div><h5>View Tests</h5><p>Inspect scheduled exams</p></div>
+                        </a>
+                        <a href="${pageContext.request.contextPath}/" class="action-card glass">
+                            <i class="fas fa-globe action-icon"></i>
+                            <div><h5>Public Portal</h5><p>Visit homepage</p></div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         (function () {
             var sidebar = document.getElementById('dashboardSidebar');
             var toggle = document.getElementById('menuToggle');
             var mobile = window.matchMedia('(max-width: 767.98px)');
-            sidebar.inert = mobile.matches;
-            toggle.addEventListener('click', function () {
-                var open = sidebar.classList.toggle('is-open');
-                sidebar.inert = mobile.matches && !open;
-                toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-            });
-            sidebar.addEventListener('click', function (event) {
-                if (mobile.matches && event.target.closest('a')) {
-                    sidebar.classList.remove('is-open');
-                    sidebar.inert = true;
-                    toggle.setAttribute('aria-expanded', 'false');
-                }
-            });
-            document.addEventListener('keydown', function (event) {
-                if (event.key === 'Escape' && mobile.matches) {
-                    sidebar.classList.remove('is-open');
-                    sidebar.inert = true;
-                    toggle.setAttribute('aria-expanded', 'false');
-                }
-            });
-            mobile.addEventListener('change', function (event) {
-                if (!event.matches) sidebar.classList.remove('is-open');
-                sidebar.inert = event.matches && !sidebar.classList.contains('is-open');
-                if (!event.matches) toggle.setAttribute('aria-expanded', 'false');
-            });
+            if (sidebar && toggle) {
+                sidebar.inert = mobile.matches;
+                toggle.addEventListener('click', function () {
+                    var open = sidebar.classList.toggle('is-open');
+                    sidebar.inert = mobile.matches && !open;
+                    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                });
+                sidebar.addEventListener('click', function (event) {
+                    if (mobile.matches && event.target.closest('a')) {
+                        sidebar.classList.remove('is-open');
+                        sidebar.inert = true;
+                        toggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
         })();
     </script>
 </body>

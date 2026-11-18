@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import com.examportal.model.Candidate;
 import com.examportal.service.ExamService;
-
 import com.examportal.util.AuthUtil;
 import com.examportal.util.DBConnection;
 import jakarta.servlet.ServletException;
@@ -18,6 +17,7 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet({"/login", "/logout"})
 public class LoginServlet extends HttpServlet {
+    private final ExamService examService = new ExamService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -44,12 +44,18 @@ public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
+        if (email == null || password == null) {
+            req.setAttribute("error", "Email and password are required.");
+            req.getRequestDispatcher("/login.jsp").forward(req, resp);
+            return;
+        }
+
         String sql = "SELECT r.role_name, u.password_hash, u.candidate_id FROM users u " +
                 "JOIN roles r ON r.role_id = u.role_id " +
-                "WHERE u.email = ? AND u.active = TRUE";
+                "WHERE LOWER(u.email) = ? AND u.active = TRUE";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, email == null ? "" : email.trim().toLowerCase());
+            statement.setString(1, email.trim().toLowerCase());
             try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next() && AuthUtil.verifyPassword(password, rs.getString("password_hash"))) {
                     HttpSession session = req.getSession(true);
@@ -58,22 +64,35 @@ public class LoginServlet extends HttpServlet {
                     String role = rs.getString("role_name");
                     session.setAttribute("role", role);
                     session.setAttribute("userEmail", email.trim().toLowerCase());
-                    int candidateId = rs.getInt("candidate_id");
-                    if ("student".equals(role) && candidateId > 0) {
-                        Candidate candidate = new ExamService().getCandidate(candidateId);
-                        if (candidate != null) session.setAttribute("candidate", candidate);
+                    
+                    if ("student".equals(role)) {
+                        int candidateId = rs.getInt("candidate_id");
+                        Candidate candidate = null;
+                        if (candidateId > 0) {
+                            candidate = examService.getCandidate(candidateId);
+                        }
+                        if (candidate == null) {
+                            // Automatically link or create candidate profile for original student user
+                            candidate = examService.findOrCreateCandidateForUser(email.trim().toLowerCase());
+                        }
+                        if (candidate != null) {
+                            session.setAttribute("candidate", candidate);
+                            session.setAttribute("candidateId", candidate.getCandidateId());
+                        }
                     }
+
                     resp.sendRedirect(req.getContextPath() + ("admin".equals(role)
                             ? "/faculty/dashboard.jsp" : "/student/dashboard.jsp"));
                     return;
                 }
             }
         } catch (Exception e) {
-            req.setAttribute("error", "Login is temporarily unavailable.");
+            System.err.println("LoginServlet error: " + e.getMessage());
+            req.setAttribute("error", "Login is temporarily unavailable. Please try again.");
             req.getRequestDispatcher("/login.jsp").forward(req, resp);
             return;
         }
-        req.setAttribute("error", "Invalid credentials");
+        req.setAttribute("error", "Invalid email or password.");
         req.getRequestDispatcher("/login.jsp").forward(req, resp);
     }
 }

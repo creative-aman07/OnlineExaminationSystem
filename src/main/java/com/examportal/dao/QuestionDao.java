@@ -19,6 +19,15 @@ public class QuestionDao {
         return questions;
     }
 
+    public int countAll() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM questions";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
     public Question save(Question question) throws SQLException {
         String sql = "INSERT INTO questions (subject, question_text, option_a, option_b, option_c, option_d, correct_answer, marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {

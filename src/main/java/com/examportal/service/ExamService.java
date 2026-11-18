@@ -1,7 +1,9 @@
 package com.examportal.service;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.examportal.dao.CandidateDao;
@@ -28,14 +30,22 @@ public class ExamService {
         if (email == null || !email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
             throw new IllegalArgumentException("A valid email address is required.");
         }
-        Optional<Candidate> existing = candidateDao.findByRollNumber(rollNumber);
-        if (existing.isPresent()) throw new IllegalArgumentException("Roll number is already registered.");
+        Optional<Candidate> existingRoll = candidateDao.findByRollNumber(rollNumber.trim().toUpperCase());
+        if (existingRoll.isPresent()) throw new IllegalArgumentException("Roll number is already registered.");
+        
+        Optional<Candidate> existingEmail = candidateDao.findByEmail(email.trim().toLowerCase());
+        if (existingEmail.isPresent()) throw new IllegalArgumentException("Email address is already registered. Please sign in.");
+
         if (password == null || password.length() < 8) throw new IllegalArgumentException("Password must be at least 8 characters.");
         Candidate candidate = new Candidate();
         candidate.setFullName(fullName.trim());
         candidate.setRollNumber(rollNumber.trim().toUpperCase());
-        candidate.setEmail(email == null ? "" : email.trim().toLowerCase());
+        candidate.setEmail(email.trim().toLowerCase());
         return candidateDao.save(candidate, password);
+    }
+
+    public Candidate findOrCreateCandidateForUser(String email) throws SQLException {
+        return candidateDao.findOrCreateForUser(email);
     }
 
     public List<Question> listQuestions() throws SQLException {
@@ -142,5 +152,63 @@ public class ExamService {
 
     public Candidate getCandidate(int candidateId) throws SQLException {
         return candidateDao.findById(candidateId);
+    }
+
+    // Dashboard Statistics helpers
+    public int countTotalTests() throws SQLException {
+        return testDao.countAll();
+    }
+
+    public int countTotalQuestions() throws SQLException {
+        return questionDao.countAll();
+    }
+
+    public int countTotalCandidates() throws SQLException {
+        return candidateDao.countAll();
+    }
+
+    public int countTotalSubmissions() throws SQLException {
+        return resultDao.countAll();
+    }
+
+    public List<Result> listRecentSubmissions(int limit) throws SQLException {
+        return resultDao.findAllRecent(limit);
+    }
+
+    public Map<String, Object> getStudentDashboardStats(int candidateId) throws SQLException {
+        Map<String, Object> stats = new HashMap<>();
+        List<TestItem> runningTests = testDao.findRunningTests();
+        List<Result> candidateResults = resultDao.findByCandidate(candidateId);
+        
+        int availableExams = runningTests.size();
+        int completedExams = candidateResults.size();
+        double avgScore = 0.0;
+        double bestScore = 0.0;
+
+        if (!candidateResults.isEmpty()) {
+            double sum = 0.0;
+            for (Result r : candidateResults) {
+                sum += r.getPercentage();
+                if (r.getPercentage() > bestScore) {
+                    bestScore = r.getPercentage();
+                }
+            }
+            avgScore = sum / candidateResults.size();
+        }
+
+        stats.put("availableExams", availableExams);
+        stats.put("completedExams", completedExams);
+        stats.put("avgScore", String.format("%.1f", avgScore));
+        stats.put("bestScore", String.format("%.1f", bestScore));
+        return stats;
+    }
+
+    public Map<String, Object> getFacultyDashboardStats() throws SQLException {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalTests", testDao.countAll());
+        stats.put("totalQuestions", questionDao.countAll());
+        stats.put("totalCandidates", candidateDao.countAll());
+        stats.put("totalSubmissions", resultDao.countAll());
+        return stats;
     }
 }

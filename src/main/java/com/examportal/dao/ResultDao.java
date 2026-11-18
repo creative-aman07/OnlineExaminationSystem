@@ -24,11 +24,34 @@ public class ResultDao {
         }
     }
 
+    public int countAll() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM results";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
     public List<Result> findByCandidate(int candidateId) throws SQLException {
         List<Result> results = new ArrayList<>();
         String sql = "SELECT * FROM results WHERE candidate_id = ? ORDER BY result_id DESC";
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, candidateId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    results.add(map(rs));
+                }
+            }
+        }
+        return results;
+    }
+
+    public List<Result> findAllRecent(int limit) throws SQLException {
+        List<Result> results = new ArrayList<>();
+        String sql = "SELECT * FROM results ORDER BY result_id DESC LIMIT ?";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit > 0 ? limit : 10);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     results.add(map(rs));

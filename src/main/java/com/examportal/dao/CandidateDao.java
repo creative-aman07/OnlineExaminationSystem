@@ -24,7 +24,7 @@ public class CandidateDao {
                 try (ResultSet keys = ps.getGeneratedKeys()) {
                     if (keys.next()) candidate.setCandidateId(keys.getInt(1));
                 }
-                if (!candidate.getEmail().isBlank()) {
+                if (candidate.getEmail() != null && !candidate.getEmail().isBlank()) {
                     user.setString(1, candidate.getEmail().trim().toLowerCase());
                     user.setString(2, AuthUtil.hashPassword(password));
                     user.setInt(3, candidate.getCandidateId());
@@ -54,6 +54,20 @@ public class CandidateDao {
         return Optional.empty();
     }
 
+    public Optional<Candidate> findByEmail(String email) throws SQLException {
+        if (email == null || email.isBlank()) return Optional.empty();
+        String sql = "SELECT * FROM candidates WHERE LOWER(email) = ? ORDER BY candidate_id DESC";
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email.trim().toLowerCase());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(map(rs));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     public Candidate findById(int candidateId) throws SQLException {
         String sql = "SELECT * FROM candidates WHERE candidate_id = ?";
         try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -65,6 +79,52 @@ public class CandidateDao {
             }
         }
         return null;
+    }
+
+    public Candidate findOrCreateForUser(String email) throws SQLException {
+        Optional<Candidate> existing = findByEmail(email);
+        if (existing.isPresent()) return existing.get();
+
+        String name = email.contains("@") ? email.substring(0, email.indexOf('@')) : email;
+        name = Character.toUpperCase(name.charAt(0)) + (name.length() > 1 ? name.substring(1) : "");
+        String roll = "STU-" + System.currentTimeMillis() % 100000;
+
+        String insert = "INSERT INTO candidates (full_name, roll_number, email) VALUES (?, ?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, name);
+            ps.setString(2, roll);
+            ps.setString(3, email.trim().toLowerCase());
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    int id = rs.getInt(1);
+                    // Also update users table
+                    try (PreparedStatement upd = conn.prepareStatement(
+                            "UPDATE users SET candidate_id = ? WHERE LOWER(email) = ?")) {
+                        upd.setInt(1, id);
+                        upd.setString(2, email.trim().toLowerCase());
+                        upd.executeUpdate();
+                    }
+                    Candidate c = new Candidate();
+                    c.setCandidateId(id);
+                    c.setFullName(name);
+                    c.setRollNumber(roll);
+                    c.setEmail(email.trim().toLowerCase());
+                    return c;
+                }
+            }
+        }
+        return null;
+    }
+
+    public int countAll() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM candidates";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
     }
 
     public List<Candidate> findAll() throws SQLException {

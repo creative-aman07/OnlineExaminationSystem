@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestDao {
-    // Status is computed against the database clock (NOW()) so scheduling is
-    // consistent even when the app server clock drifts from the DB clock.
     private static final String STATUS_EXPR =
             "CASE WHEN start_time IS NOT NULL AND NOW() < start_time THEN 'UPCOMING' " +
             "WHEN end_time IS NOT NULL AND NOW() > end_time THEN 'CLOSED' " +
@@ -30,7 +28,15 @@ public class TestDao {
         return tests;
     }
 
-    /** Tests whose schedule window contains the current DB time (or that have no window). */
+    public int countAll() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM tests";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
     public List<TestItem> findRunningTests() throws SQLException {
         List<TestItem> tests = new ArrayList<>();
         String sql = "SELECT *, " + STATUS_EXPR + " FROM tests " +

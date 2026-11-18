@@ -24,7 +24,7 @@ public class CandidateServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String path = req.getPathInfo();
-        if (path == null || "/".equals(path)) {
+        if (path == null || "/".equals(path) || "/register".equals(path)) {
             HttpSession session = req.getSession(false);
             if (session != null && "student".equals(session.getAttribute("role"))
                     && session.getAttribute("candidate") != null) {
@@ -38,20 +38,7 @@ public class CandidateServlet extends HttpServlet {
             req.getRequestDispatcher("/jsp/candidate/register.jsp").forward(req, resp);
             return;
         }
-        if ("/register".equals(path)) {
-            HttpSession session = req.getSession(false);
-            if (session != null && "student".equals(session.getAttribute("role"))
-                    && session.getAttribute("candidate") != null) {
-                resp.sendRedirect(req.getContextPath() + "/candidate/tests");
-                return;
-            }
-            if (session != null && "admin".equals(session.getAttribute("role"))) {
-                resp.sendRedirect(req.getContextPath() + "/faculty/dashboard.jsp");
-                return;
-            }
-            req.getRequestDispatcher("/jsp/candidate/register.jsp").forward(req, resp);
-            return;
-        }
+
         if ("/tests".equals(path)) {
             try {
                 List<TestItem> tests = examService.listTests();
@@ -62,21 +49,28 @@ public class CandidateServlet extends HttpServlet {
             }
             return;
         }
+
         if ("/take".equals(path)) {
             HttpSession session = req.getSession(false);
-            if (session == null || session.getAttribute("candidate") == null) {
-                resp.sendRedirect(req.getContextPath() + "/candidate/register");
+            Candidate candidate = ensureCandidate(session);
+            if (candidate == null) {
+                resp.sendRedirect(req.getContextPath() + "/login");
                 return;
             }
-            Candidate candidate = (Candidate) session.getAttribute("candidate");
-            int testId = Integer.parseInt(req.getParameter("testId"));
+
+            String testIdParam = req.getParameter("testId");
+            if (testIdParam == null || testIdParam.isBlank()) {
+                resp.sendRedirect(req.getContextPath() + "/candidate/tests");
+                return;
+            }
+
+            int testId = Integer.parseInt(testIdParam);
             try {
                 TestItem selectedTest = examService.getTest(testId);
                 if (selectedTest == null) {
-                    resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Test not found");
                     return;
                 }
-                // Only tests whose schedule window contains the DB's current time can be taken.
                 if (!selectedTest.isRunning()) {
                     req.setAttribute("error", "UPCOMING".equals(selectedTest.getStatus())
                             ? "This test has not started yet. It opens at " + selectedTest.getStartTime() + "."
@@ -105,13 +99,14 @@ public class CandidateServlet extends HttpServlet {
             }
             return;
         }
+
         if ("/results".equals(path)) {
             HttpSession session = req.getSession(false);
-            if (session == null || session.getAttribute("candidate") == null) {
-                resp.sendRedirect(req.getContextPath() + "/candidate/register");
+            Candidate candidate = ensureCandidate(session);
+            if (candidate == null) {
+                resp.sendRedirect(req.getContextPath() + "/login");
                 return;
             }
-            Candidate candidate = (Candidate) session.getAttribute("candidate");
             try {
                 List<Result> results = examService.getResultsForCandidate(candidate.getCandidateId());
                 req.setAttribute("results", results);
@@ -121,13 +116,14 @@ public class CandidateServlet extends HttpServlet {
             }
             return;
         }
+
         if ("/analysis".equals(path)) {
             HttpSession session = req.getSession(false);
-            if (session == null || session.getAttribute("candidate") == null) {
-                resp.sendRedirect(req.getContextPath() + "/candidate/register");
+            Candidate candidate = ensureCandidate(session);
+            if (candidate == null) {
+                resp.sendRedirect(req.getContextPath() + "/login");
                 return;
             }
-            Candidate candidate = (Candidate) session.getAttribute("candidate");
             try {
                 Result latest = examService.getLatestResult(candidate.getCandidateId());
                 req.setAttribute("latestResult", latest);
@@ -137,6 +133,7 @@ public class CandidateServlet extends HttpServlet {
             }
             return;
         }
+
         resp.sendError(HttpServletResponse.SC_NOT_FOUND);
     }
 
@@ -162,6 +159,26 @@ public class CandidateServlet extends HttpServlet {
         resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
     }
 
+    private Candidate ensureCandidate(HttpSession session) {
+        if (session == null) return null;
+        Object candidateObj = session.getAttribute("candidate");
+        if (candidateObj instanceof Candidate) return (Candidate) candidateObj;
+        
+        String role = (String) session.getAttribute("role");
+        String userEmail = (String) session.getAttribute("userEmail");
+        if ("student".equals(role) && userEmail != null) {
+            try {
+                Candidate c = examService.findOrCreateCandidateForUser(userEmail);
+                if (c != null) {
+                    session.setAttribute("candidate", c);
+                    session.setAttribute("candidateId", c.getCandidateId());
+                    return c;
+                }
+            } catch (SQLException ignored) {}
+        }
+        return null;
+    }
+
     private void registerCandidate(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         String fullName = req.getParameter("fullName");
         String rollNumber = req.getParameter("rollNumber");
@@ -184,21 +201,23 @@ public class CandidateServlet extends HttpServlet {
 
     private void submitTest(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         HttpSession session = req.getSession(false);
-        if (session == null || session.getAttribute("candidate") == null) {
-            resp.sendRedirect(req.getContextPath() + "/candidate/register");
+        Candidate candidate = ensureCandidate(session);
+        if (candidate == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        Candidate candidate = (Candidate) session.getAttribute("candidate");
+
         int testId = Integer.parseInt(req.getParameter("testId"));
         String testName = req.getParameter("testName");
         try {
-            // Duplicate-submission guard is DB-backed, so it survives session loss.
+            if (testName == null || testName.isBlank()) {
+                TestItem item = examService.getTest(testId);
+                testName = item != null ? item.getTestName() : "Examination";
+            }
             if (examService.hasSubmittedAttempt(candidate.getCandidateId(), testId)) {
                 resp.sendRedirect(req.getContextPath() + "/candidate/results");
                 return;
             }
-            // Server-side deadline check against the DB clock (with a short grace window);
-            // an expired attempt is scored with whatever answers arrived.
             boolean onTime = examService.isSubmissionOnTime(candidate.getCandidateId(), testId);
             List<Question> questions = examService.getQuestionsForTest(testId);
             String[] answers = new String[questions.size()];

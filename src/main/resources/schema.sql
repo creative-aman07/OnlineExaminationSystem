@@ -1,3 +1,12 @@
+-- ============================================================
+-- Online Examination System - Schema
+-- Compatible with MySQL 8.x and H2 (MySQL Mode)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS roles (
+    role_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS candidates (
     candidate_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -5,6 +14,19 @@ CREATE TABLE IF NOT EXISTS candidates (
     roll_number VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role_id BIGINT NOT NULL,
+    candidate_id BIGINT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(role_id),
+    FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS questions (
@@ -30,7 +52,6 @@ CREATE TABLE IF NOT EXISTS tests (
     end_time DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
-
 
 CREATE TABLE IF NOT EXISTS test_questions (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -69,24 +90,6 @@ CREATE TABLE IF NOT EXISTS exam_attempts (
     FOREIGN KEY (test_id) REFERENCES tests(test_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS roles (
-    role_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    role_name VARCHAR(50) NOT NULL UNIQUE
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS users (
-    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    role_id BIGINT NOT NULL,
-    candidate_id BIGINT NULL,
-    active BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (role_id) REFERENCES roles(role_id),
-    FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE SET NULL
-) ENGINE=InnoDB;
-
 CREATE TABLE IF NOT EXISTS student_answers (
     answer_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     attempt_id BIGINT NOT NULL,
@@ -99,4 +102,5 @@ CREATE TABLE IF NOT EXISTS student_answers (
     FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Roles
 INSERT IGNORE INTO roles (role_id, role_name) VALUES (1, 'admin'), (2, 'student');

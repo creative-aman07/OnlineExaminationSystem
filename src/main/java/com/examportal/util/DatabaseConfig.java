@@ -1,6 +1,7 @@
 package com.examportal.util;
 
 import java.io.BufferedReader;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,18 +20,45 @@ public final class DatabaseConfig {
     }
 
     private static Config load() {
-        String host = env("DB_HOST", "");
-        String port = env("DB_PORT", "3306");
-        String name = env("DB_NAME", env("MYSQL_DATABASE", env("MYSQLDATABASE", "")));
-        String username = env("DB_USERNAME", env("DB_USER", env("MYSQLUSER", "")));
-        String password = env("DB_PASSWORD", env("MYSQLPASSWORD", ""));
-        String explicitUrl = env("JDBC_URL", "");
+        // Multi-platform URL detection (Railway, Render, Heroku, AWS, local)
+        String explicitUrl = env("JDBC_URL", env("DATABASE_URL", env("MYSQL_URL", env("JAWSDB_URL", env("CLEARDB_DATABASE_URL", "")))));
+        
+        String host = env("DB_HOST", env("MYSQLHOST", env("MYSQL_HOST", "")));
+        String port = env("DB_PORT", env("MYSQLPORT", env("MYSQL_PORT", "3306")));
+        String name = env("DB_NAME", env("MYSQLDATABASE", env("MYSQL_DATABASE", env("MYSQL_DB", ""))));
+        String username = env("DB_USERNAME", env("DB_USER", env("MYSQLUSER", env("MYSQL_USER", ""))));
+        String password = env("DB_PASSWORD", env("MYSQLPASSWORD", env("MYSQL_PASSWORD", "")));
         String ssl = env("DB_SSL", "false");
         String timezone = env("DB_TIMEZONE", "UTC");
         String url;
 
         if (!explicitUrl.isBlank()) {
-            url = explicitUrl;
+            // Check if standard URI format mysql://user:pass@host:port/dbname
+            if (explicitUrl.startsWith("mysql://") || explicitUrl.startsWith("mysqls://")) {
+                try {
+                    URI uri = URI.create(explicitUrl);
+                    String parsedHost = uri.getHost();
+                    int parsedPort = uri.getPort() > 0 ? uri.getPort() : 3306;
+                    String parsedPath = uri.getPath() != null ? uri.getPath().replaceFirst("^/", "") : "";
+                    String userInfo = uri.getUserInfo();
+                    if (userInfo != null && !userInfo.isEmpty()) {
+                        String[] parts = userInfo.split(":", 2);
+                        if (username.isBlank()) username = parts[0];
+                        if (password.isBlank() && parts.length > 1) password = parts[1];
+                    }
+                    url = "jdbc:mysql://" + parsedHost + ":" + parsedPort + "/" + parsedPath
+                            + "?useSSL=" + ssl
+                            + "&allowPublicKeyRetrieval=true"
+                            + "&serverTimezone=" + timezone
+                            + "&characterEncoding=UTF-8";
+                } catch (Exception e) {
+                    url = explicitUrl.replaceFirst("^mysql://", "jdbc:mysql://");
+                }
+            } else if (!explicitUrl.startsWith("jdbc:")) {
+                url = "jdbc:" + explicitUrl;
+            } else {
+                url = explicitUrl;
+            }
         } else if (!host.isBlank() && !name.isBlank()) {
             url = "jdbc:mysql://" + host + ":" + port + "/" + name
                     + "?useSSL=" + ssl
@@ -38,6 +66,7 @@ public final class DatabaseConfig {
                     + "&serverTimezone=" + timezone
                     + "&characterEncoding=UTF-8";
         } else {
+            // Resilient zero-config H2 embedded database fallback
             url = "jdbc:h2:mem:examdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
             username = "sa";
             password = "";
@@ -46,14 +75,21 @@ public final class DatabaseConfig {
         String driver = env("DB_DRIVER", url.startsWith("jdbc:mysql") ? "com.mysql.cj.jdbc.Driver" : "org.h2.Driver");
         int maxPool = integer("DB_POOL_MAX", 10);
         int minIdle = integer("DB_POOL_MIN", 2);
-        long timeout = integer("DB_CONNECTION_TIMEOUT", 30000);
-        long validation = integer("DB_QUERY_TIMEOUT", 30) * 1000L;
+        long timeout = integer("DB_CONNECTION_TIMEOUT", 15000);
+        long validation = integer("DB_QUERY_TIMEOUT", 15) * 1000L;
         return new Config(url, username, password, driver, maxPool, minIdle, timeout, validation);
+    }
+
+    public static Config getH2FallbackConfig() {
+        return new Config("jdbc:h2:mem:examdb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+                "sa", "", "org.h2.Driver", 10, 2, 10000, 10000);
     }
 
     private static String env(String key, String fallback) {
         String value = System.getenv(key);
         if (value != null && !value.isBlank()) return value.trim();
+        String sysProp = System.getProperty(key);
+        if (sysProp != null && !sysProp.isBlank()) return sysProp.trim();
         return readDotEnv(key, fallback);
     }
 

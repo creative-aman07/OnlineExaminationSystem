@@ -116,6 +116,20 @@ mysql -h <MYSQL_HOST> -P 3306 -u <MYSQL_USER> -p -e "SELECT COUNT(*) FROM examdb
 
 Store backups outside the MySQL container or disk and verify a restore periodically.
 
+## Demo accounts & Demo Exams
+
+The application automatically seeds ready-to-use demo accounts and examinations on startup across any platform:
+
+| Role | Email | Password | Access / Notes |
+|---|---|---|---|
+| **Admin** | `admin@exam.com` | `password123` | Faculty Dashboard & Question Bank Management |
+| **Student** | `student@exam.com` | `password123` | Student Dashboard, Assessment catalog, Results |
+
+### Pre-loaded Assessments
+1. **Java Full Stack & Core Programming** (20 mins, 6 MCQs covering OOP, JVM, Collections, Types)
+2. **Web Technologies & Database Systems** (15 mins, 5 MCQs covering HTTP, Servlets, SQL, ACID)
+3. **General Aptitude & Logical Reasoning** (15 mins, 5 MCQs covering quantitative and logical reasoning)
+
 ## Security
 
 - BCrypt password hashing

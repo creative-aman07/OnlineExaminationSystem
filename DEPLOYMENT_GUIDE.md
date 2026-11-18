@@ -246,6 +246,15 @@ certbot --nginx -d yourdomain.com
 
 ---
 
+## 🧪 Demo Credentials
+
+Pre-seeded and ready out of the box on any deployment:
+
+| Role | Email | Password | Pre-linked Profile |
+|------|-------|----------|--------------------|
+| **Admin** | `admin@exam.com` | `password123` | Full Question Bank & Assessment Management |
+| **Student** | `student@exam.com` | `password123` | Roll No: `STUDENT001`, Pre-seeded exam result |
+
 ---
 
 ## 📝 Application URLs
