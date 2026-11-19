@@ -21,8 +21,9 @@ public final class DatabaseConfig {
 
     private static Config load() {
         // Multi-platform URL detection (Railway, Render, Heroku, AWS, local)
-        String explicitUrl = env("JDBC_URL", env("DATABASE_URL", env("MYSQL_URL", env("JAWSDB_URL", env("CLEARDB_DATABASE_URL", "")))));
-        
+        String jdbcUrl = env("JDBC_URL", "");
+        String providerUrl = env("DATABASE_URL", env("MYSQL_URL", env("JAWSDB_URL", env("CLEARDB_DATABASE_URL", ""))));
+
         String host = env("DB_HOST", env("MYSQLHOST", env("MYSQL_HOST", "")));
         String port = env("DB_PORT", env("MYSQLPORT", env("MYSQL_PORT", "3306")));
         String name = env("DB_NAME", env("MYSQLDATABASE", env("MYSQL_DATABASE", env("MYSQL_DB", ""))));
@@ -31,6 +32,9 @@ public final class DatabaseConfig {
         String ssl = env("DB_SSL", "false");
         String timezone = env("DB_TIMEZONE", "UTC");
         String url;
+        String explicitUrl = !jdbcUrl.isBlank()
+            ? jdbcUrl
+            : host.isBlank() || name.isBlank() ? providerUrl : "";
 
         if (!explicitUrl.isBlank()) {
             // Check if standard URI format mysql://user:pass@host:port/dbname

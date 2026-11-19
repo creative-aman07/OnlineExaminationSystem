@@ -71,7 +71,7 @@ mvn clean package cargo:run
 
 Open **http://localhost:8080** in your browser.
 
-> **Note:** If MySQL is unreachable, the app automatically falls back to H2 in-memory database. Your data won't persist between restarts in fallback mode.
+> **Note:** If no MySQL connection settings are provided, the app uses an H2 in-memory database for local development. Configured MySQL outages are reported as unhealthy and retried instead of switching to a separate empty database.
 
 ---
 

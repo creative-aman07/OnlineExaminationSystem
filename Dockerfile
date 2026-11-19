@@ -18,6 +18,9 @@ FROM tomcat:10.1-jdk21-temurin-jammy
 # Remove default Tomcat webapps
 RUN rm -rf /usr/local/tomcat/webapps/*
 
+# Render probes detected ports; disable Tomcat's unused plaintext shutdown socket.
+RUN sed -i 's/<Server port="8005"/<Server port="-1"/' /usr/local/tomcat/conf/server.xml
+
 # Deploy exploded webapp directly as ROOT (instant startup, zero runtime unpack delay)
 COPY --from=builder /app/target/ROOT/ /usr/local/tomcat/webapps/ROOT/
 # Also keep ROOT.war in webapps
