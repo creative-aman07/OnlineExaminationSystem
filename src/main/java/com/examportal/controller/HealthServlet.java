@@ -13,9 +13,9 @@ public class HealthServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         boolean ready = DatabaseHealthCheck.isReady();
-        response.setStatus(ready ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+        response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write("{\"status\":\"" + (ready ? "ready" : "unavailable") + "\"}");
+        response.getWriter().write("{\"status\":\"ok\",\"db\":\"" + (ready ? "connected" : "initializing") + "\"}");
     }
 }

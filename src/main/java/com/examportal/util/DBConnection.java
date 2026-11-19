@@ -32,22 +32,26 @@ public final class DBConnection {
                 System.out.println("DBConnection: Connected successfully to database [" + config.url() + "]");
             }
             return ds;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             System.err.println("DBConnection: Could not connect to primary database [" + config.url() + "]: " + e.getMessage());
             if (!config.url().startsWith("jdbc:h2:")) {
                 System.out.println("DBConnection: Falling back to resilient embedded H2 database to ensure zero downtime.");
-                DatabaseConfig.Config fallback = DatabaseConfig.getH2FallbackConfig();
-                HikariConfig h2Config = new HikariConfig();
-                h2Config.setJdbcUrl(fallback.url());
-                h2Config.setUsername(fallback.username());
-                h2Config.setPassword(fallback.password());
-                h2Config.setDriverClassName(fallback.driver());
-                h2Config.setMaximumPoolSize(fallback.maxPoolSize());
-                h2Config.setMinimumIdle(fallback.minIdle());
-                h2Config.setPoolName("examportal-h2-fallback-pool");
-                return new HikariDataSource(h2Config);
+                try {
+                    DatabaseConfig.Config fallback = DatabaseConfig.getH2FallbackConfig();
+                    HikariConfig h2Config = new HikariConfig();
+                    h2Config.setJdbcUrl(fallback.url());
+                    h2Config.setUsername(fallback.username());
+                    h2Config.setPassword(fallback.password());
+                    h2Config.setDriverClassName(fallback.driver());
+                    h2Config.setMaximumPoolSize(fallback.maxPoolSize());
+                    h2Config.setMinimumIdle(fallback.minIdle());
+                    h2Config.setPoolName("examportal-h2-fallback-pool");
+                    return new HikariDataSource(h2Config);
+                } catch (Throwable t) {
+                    System.err.println("DBConnection: H2 fallback initialization error: " + t.getMessage());
+                }
             }
-            throw new RuntimeException("DBConnection: Failed to initialize any data source", e);
+            return null;
         }
     }
 
@@ -58,6 +62,9 @@ public final class DBConnection {
                     dataSource = createDataSource();
                 }
             }
+        }
+        if (dataSource == null) {
+            throw new SQLException("Database connection is currently unavailable");
         }
         return dataSource.getConnection();
     }

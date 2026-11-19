@@ -58,7 +58,7 @@ public class SecurityFilter implements Filter {
 
         // Public GET / POST pages
         if (fullPath.equals("/health") || fullPath.equals("/login") || fullPath.equals("/logout")
-                || fullPath.equals("/") || fullPath.isEmpty()
+                || fullPath.equals("/") || fullPath.isEmpty() || fullPath.equals("/home") || fullPath.equals("/index")
                 || fullPath.equals("/index.jsp") || fullPath.equals("/jsp/candidate/register.jsp")) {
             chain.doFilter(request, response);
             return;

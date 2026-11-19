@@ -1,7 +1,7 @@
 # ============================================================
 # Multi-stage Docker build for Online Examination System
-# Stage 1: Maven build    →  produces ROOT.war
-# Stage 2: Tomcat runtime →  serves the application
+# Stage 1: Maven build    →  produces war & exploded webapp
+# Stage 2: Tomcat runtime →  serves the application at root /
 # ============================================================
 
 # --- Stage 1: Build ---
@@ -15,11 +15,15 @@ RUN mvn clean package -DskipTests -B
 # --- Stage 2: Runtime ---
 FROM tomcat:10.1-jdk21-temurin-jammy
 
-# Remove default webapps
+# Remove default Tomcat webapps
 RUN rm -rf /usr/local/tomcat/webapps/*
 
-# Copy our WAR as ROOT (deploys at /)
+# Deploy exploded webapp directly as ROOT (instant startup, zero runtime unpack delay)
+COPY --from=builder /app/target/ROOT/ /usr/local/tomcat/webapps/ROOT/
+# Also keep ROOT.war in webapps
 COPY --from=builder /app/target/ROOT.war /usr/local/tomcat/webapps/ROOT.war
 
 EXPOSE 8080 10000
-CMD ["sh", "-c", "if [ -n \"$PORT\" ] && [ \"$PORT\" != \"8080\" ]; then sed -i 's/port=\"8080\"/port=\"'\"$PORT\"'\"/' /usr/local/tomcat/conf/server.xml; fi; exec catalina.sh run"]
+
+# Dynamically adjust Tomcat HTTP port based on $PORT (Railway, Render, Cloud Run, etc.)
+CMD ["sh", "-c", "APP_PORT=\"${PORT:-8080}\"; echo \"==> Starting Tomcat on port $APP_PORT ...\"; if [ \"$APP_PORT\" != \"8080\" ]; then sed -i 's/port=\"8080\"/port=\"'$APP_PORT'\"/g' /usr/local/tomcat/conf/server.xml; fi; exec catalina.sh run"]
