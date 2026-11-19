@@ -81,7 +81,7 @@ Never commit `.env` or real credentials.
 5. Deploy the database private service first and confirm `/healthcheck.sh` succeeds.
 6. Deploy the web service and verify `https://<service>.onrender.com/health`.
 
-Remove any old `JDBC_URL` override from the web service if it points to another provider (for example, `mysql.railway.internal`). The explicit `JDBC_URL` setting takes precedence; otherwise, the configured `DB_HOST` and `DB_NAME` take precedence over generic provider URLs such as `DATABASE_URL`.
+When `DB_HOST` and `DB_NAME` are set, those Render settings take precedence over any stale `JDBC_URL` or generic provider URL. Otherwise, `JDBC_URL` is used as the explicit connection setting.
 
 Persistent disk: mount a billable Render disk at `/var/lib/mysql`. Do not expose port 3306 publicly. Private services are not reachable from the public internet.
 

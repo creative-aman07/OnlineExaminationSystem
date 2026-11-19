@@ -32,9 +32,9 @@ public final class DatabaseConfig {
         String ssl = env("DB_SSL", "false");
         String timezone = env("DB_TIMEZONE", "UTC");
         String url;
-        String explicitUrl = !jdbcUrl.isBlank()
-            ? jdbcUrl
-            : host.isBlank() || name.isBlank() ? providerUrl : "";
+        String explicitUrl = host.isBlank() || name.isBlank()
+            ? (!jdbcUrl.isBlank() ? jdbcUrl : providerUrl)
+            : "";
 
         if (!explicitUrl.isBlank()) {
             // Check if standard URI format mysql://user:pass@host:port/dbname
