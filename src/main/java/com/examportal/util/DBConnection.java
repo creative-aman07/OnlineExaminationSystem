@@ -34,8 +34,24 @@ public final class DBConnection {
             return ds;
         } catch (Throwable e) {
             System.err.println("DBConnection: Could not connect to primary database [" + config.url() + "]: " + e.getMessage());
-            if (!config.url().startsWith("jdbc:h2:")) {
-                System.err.println("DBConnection: External database is unavailable; requests will retry the configured database.");
+            if (!config.url().startsWith("jdbc:h2:") && DatabaseConfig.isH2FallbackEnabled()) {
+                try {
+                    DatabaseConfig.Config fallback = DatabaseConfig.getH2FallbackConfig();
+                    HikariConfig h2Config = new HikariConfig();
+                    h2Config.setJdbcUrl(fallback.url());
+                    h2Config.setUsername(fallback.username());
+                    h2Config.setPassword(fallback.password());
+                    h2Config.setDriverClassName(fallback.driver());
+                    h2Config.setMaximumPoolSize(fallback.maxPoolSize());
+                    h2Config.setMinimumIdle(fallback.minIdle());
+                    h2Config.setPoolName("examportal-h2-fallback-pool");
+                    System.err.println("DBConnection: Using temporary in-memory H2 fallback; changes will not persist.");
+                    return new HikariDataSource(h2Config);
+                } catch (Throwable fallbackError) {
+                    System.err.println("DBConnection: H2 fallback initialization failed: " + fallbackError.getMessage());
+                }
+            } else if (!config.url().startsWith("jdbc:h2:")) {
+                System.err.println("DBConnection: External database is unavailable and H2 fallback is disabled.");
             }
             return null;
         }
@@ -57,6 +73,11 @@ public final class DBConnection {
 
     public static boolean isMySQLConfigured() {
         return dataSource != null && dataSource.getJdbcUrl() != null && dataSource.getJdbcUrl().startsWith("jdbc:mysql");
+    }
+
+    public static boolean isUsingH2Fallback() {
+        return dataSource != null && dataSource.getJdbcUrl() != null && dataSource.getJdbcUrl().startsWith("jdbc:h2:")
+                && !DatabaseConfig.get().url().startsWith("jdbc:h2:");
     }
 
     public static void close() {

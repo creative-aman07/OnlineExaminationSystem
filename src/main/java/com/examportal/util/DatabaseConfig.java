@@ -19,6 +19,10 @@ public final class DatabaseConfig {
         return INSTANCE;
     }
 
+    public static boolean isH2FallbackEnabled() {
+        return Boolean.parseBoolean(env("DB_H2_FALLBACK_ENABLED", "true"));
+    }
+
     private static Config load() {
         // Multi-platform URL detection (Railway, Render, Heroku, AWS, local)
         String jdbcUrl = env("JDBC_URL", "");

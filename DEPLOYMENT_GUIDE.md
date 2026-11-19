@@ -71,7 +71,7 @@ mvn clean package cargo:run
 
 Open **http://localhost:8080** in your browser.
 
-> **Note:** If no MySQL connection settings are provided, the app uses an H2 in-memory database for local development. Configured MySQL outages are reported as unhealthy and retried instead of switching to a separate empty database.
+> **Note:** If MySQL is unavailable, the app uses an H2 in-memory fallback by default so demo login remains available. Fallback data is temporary and separate from MySQL. Set `DB_H2_FALLBACK_ENABLED=false` when the service must fail health checks instead of using volatile storage.
 
 ---
 

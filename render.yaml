@@ -40,6 +40,8 @@ services:
           envVarKey: MYSQL_PASSWORD
       - key: DB_DRIVER
         value: com.mysql.cj.jdbc.Driver
+      - key: DB_H2_FALLBACK_ENABLED
+        value: true
       - key: DB_SSL
         value: false
       - key: DB_TIMEZONE
