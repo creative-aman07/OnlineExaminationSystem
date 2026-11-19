@@ -50,7 +50,7 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        String sql = "SELECT r.role_name, u.password_hash, u.candidate_id FROM users u " +
+        String sql = "SELECT LOWER(TRIM(r.role_name)) AS role_name, u.password_hash, u.candidate_id FROM users u " +
                 "JOIN roles r ON r.role_id = u.role_id " +
                 "WHERE LOWER(u.email) = ? AND u.active = TRUE";
         try (Connection connection = DBConnection.getConnection();
@@ -58,10 +58,16 @@ public class LoginServlet extends HttpServlet {
             statement.setString(1, email.trim().toLowerCase());
             try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next() && AuthUtil.verifyPassword(password, rs.getString("password_hash"))) {
+                    String role = rs.getString("role_name");
+                    if (!"admin".equals(role) && !"student".equals(role)) {
+                        req.setAttribute("error", "This account does not have a supported role.");
+                        req.getRequestDispatcher("/login.jsp").forward(req, resp);
+                        return;
+                    }
+
                     HttpSession session = req.getSession(true);
                     session.invalidate();
                     session = req.getSession(true);
-                    String role = rs.getString("role_name");
                     session.setAttribute("role", role);
                     session.setAttribute("userEmail", email.trim().toLowerCase());
                     
